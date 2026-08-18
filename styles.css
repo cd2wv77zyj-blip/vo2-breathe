@@ -278,3 +278,114 @@ input,select{width:100%;margin-top:6px;padding:12px 11px;border:1px solid var(--
   .landscape-lock strong{font-size:26px}
   .landscape-lock span{font-size:13px;color:var(--muted)}
 }
+
+/* v7 design-spec pass */
+.settings-button{
+  width:46px!important;height:46px!important;
+  background:transparent!important;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line))!important;
+}
+.settings-svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round}
+.health-status-badge{
+  white-space:nowrap!important;
+  line-height:1!important;
+  padding:8px 11px!important;
+  font-size:11px!important;
+  min-width:max-content;
+}
+#healthStatusCard .card-heading-row{align-items:center}
+#healthStatusCard h2{max-width:72%}
+
+.today-widget{position:relative}
+.today-widget.editing{user-select:none;-webkit-user-select:none;touch-action:none}
+.widget-drag-handle{
+  display:none;
+  position:absolute;right:14px;top:12px;
+  color:var(--muted);font-size:20px;z-index:5
+}
+.today-edit-mode .today-widget .widget-drag-handle{display:block}
+.today-edit-mode .today-widget>.card,
+.today-edit-mode .today-widget>.training-load-card{
+  outline:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));
+  transform:scale(.995)
+}
+.today-widget.dragging{opacity:.68;transform:scale(.985);z-index:10}
+.today-edit-hint{
+  position:sticky;bottom:calc(86px + var(--safe-bottom));z-index:25;
+  margin:12px 0;padding:10px 12px;border-radius:14px;
+  background:var(--card);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:var(--shadow);font-size:11px;color:var(--muted)
+}
+.today-edit-hint[hidden]{display:none}
+
+.todays-plan-card{padding:16px 16px 10px}
+.todays-plan-list{margin-top:10px}
+.plan-item{
+  display:grid;grid-template-columns:30px 1fr auto;gap:10px;
+  align-items:center;padding:12px 0;border-top:1px solid var(--line)
+}
+.plan-item:first-child{border-top:0}
+.plan-item-icon{width:26px;height:26px;display:grid;place-items:center;color:var(--accent)}
+.plan-item-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.plan-item-copy strong{display:block;font-size:13px}
+.plan-item-copy small{display:block;color:var(--muted);font-size:10px;margin-top:2px;line-height:1.35}
+.plan-item-action{font-size:10px;color:var(--accent);font-weight:800}
+.plan-item[data-protocol]{cursor:pointer}
+
+.breathe-screen-header{
+  display:grid;grid-template-columns:44px 1fr 44px;
+  align-items:center;text-align:center;margin-top:4px
+}
+.breathe-screen-header .eyebrow{margin-bottom:2px}
+.breathe-screen-header h1{font-size:20px;letter-spacing:-.35px;margin:0}
+.breathe-header-button{
+  height:40px;width:40px;border:0;background:transparent;color:var(--text);
+  font-size:26px;display:grid;place-items:center
+}
+.breathe-header-button:last-child{font-size:18px;letter-spacing:2px}
+
+.breath-player.featured{
+  border:0!important;background:transparent!important;box-shadow:none!important;
+  padding:8px 0 0!important;margin:6px 0 0!important
+}
+.breath-timer-row{text-align:center}
+.breath-timer-row .timer{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0}
+.breath-player.featured .orb-stage{height:390px}
+.wave-circle{width:300px!important;height:300px!important}
+.wave-ring{inset:5px!important;border-width:1.25px!important}
+.wave-circle::before,.wave-circle::after{inset:10px!important}
+.breath-phase-label{font-size:18px!important;font-weight:500!important}
+.breath-phase-number{font-size:74px!important}
+.breath-phase-unit{font-size:14px!important}
+.breath-pattern-summary{margin:0 0 10px!important;font-size:12px}
+.session-progress{display:none}
+.breath-pagination{display:flex;justify-content:center;align-items:center;margin:0 0 10px}
+.protocol-dots{display:flex;gap:10px;align-items:center;justify-content:center}
+.protocol-dot{
+  width:9px;height:9px;border-radius:50%;border:0;padding:0;
+  background:color-mix(in srgb,var(--muted) 70%,transparent)
+}
+.protocol-dot.active{background:var(--accent)}
+.protocol-carousel-hidden{display:none!important}
+.sr-only{
+  position:absolute!important;width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important
+}
+.player-controls.single{margin-top:12px}
+.live-sensor-preview.two{margin-top:12px}
+#breathInstruction{text-align:center;margin:10px auto 0;max-width:330px}
+
+.bottom-nav .nav-svg{
+  width:23px;height:23px;display:block;margin:0 auto;
+  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round
+}
+.bottom-nav .nav-svg-home{stroke:none}
+.bottom-nav button:not(.active) .home-fill{fill:currentColor;opacity:.75}
+.bottom-nav button.active .home-fill{fill:currentColor}
+.bottom-nav button span.nav-icon{display:none!important}
+
+/* make the mockup hierarchy tighter */
+.screen[data-screen="today"] .hero-copy h1{font-size:34px}
+.screen[data-screen="today"] .hero-copy{margin-top:8px}

@@ -6,7 +6,7 @@ const KEY = "vo2BreatheV2";
 const LEGACY_VO2 = "vo2";
 
 const defaults = {
-  version: 6,
+  version: 7,
   health: {
     connected: false,
     latestVo2: null,
@@ -30,7 +30,8 @@ const defaults = {
   breathSessions: [],
   co2Assessments: [],
   planCompletions: {},
-  selectedProtocol: "recovery55"
+  selectedProtocol: "recovery55",
+  todayLayout:["todayPlan","trainingLoad","nextAction","vo2Trend"]
 };
 
 const protocols = [
@@ -60,14 +61,15 @@ function validNumber(v,min,max){ const n=Number(v); return Number.isFinite(n)&&n
 function loadState(){
   try{
     const parsed = JSON.parse(localStorage.getItem(KEY) || "null");
-    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4 || parsed.version === 5 || parsed.version === 6)) {
+    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4 || parsed.version === 5 || parsed.version === 6 || parsed.version === 7)) {
       return {
         ...defaults,
         ...parsed,
-        version: 6,
+        version: 7,
         health: {...defaults.health, ...(parsed.health || {})},
         settings: {...defaults.settings, ...(parsed.settings || {})},
-        profile:{...defaults.profile,...parsed.profile}
+        profile:{...defaults.profile,...parsed.profile},
+        todayLayout:Array.isArray(parsed.todayLayout)?parsed.todayLayout:[...defaults.todayLayout]
       };
     }
   }catch(_){}
@@ -133,7 +135,9 @@ function renderAll(){
   renderHeader();
   renderHealthStatus();
   renderToday();
+  renderTodaysPlan();
   renderTrainingLoad();
+  applyTodayLayout();
   renderPlanControls();
   renderTrainingPlan();
   renderProtocols();
@@ -206,6 +210,118 @@ function renderTrainingLoad(){
   $("#weeklyLoadStatus").textContent=
     load.total<targetLow?"Building your week":
     load.total<=targetHigh?"You’re on track":"High load — prioritize recovery";
+}
+
+
+function currentPlannedSession(){
+  const plan=generatePlan();
+  if(!plan.length) return null;
+  // Prefer first incomplete session in week 1 for the prototype until native calendar scheduling is added.
+  for(const w of plan){
+    for(let i=0;i<w.sessions.length;i++){
+      const key=`w${w.week}s${i}`;
+      if(!state.planCompletions[key]) return {...w.sessions[i],week:w.week,index:i,key};
+    }
+  }
+  return {...plan[0].sessions[0],week:1,index:0,key:"w1s0"};
+}
+function planItemIcon(kind){
+  if(kind==="breath") return `<svg viewBox="0 0 24 24"><path d="M3 8c3-3 5 3 8 0s5 3 10 0M3 12c3-3 5 3 8 0s5 3 10 0M3 16c3-3 5 3 8 0s5 3 10 0"></path></svg>`;
+  if(kind==="hard") return `<svg viewBox="0 0 24 24"><path d="M4 18h3v-5H4zM10.5 18h3V9h-3zM17 18h3V5h-3z"></path></svg>`;
+  return `<svg viewBox="0 0 24 24"><path d="M4 15c3 0 4-5 7-5 2 0 3 4 6 4 1 0 2-.3 3-1v4c-4 2-7 2-10 1-3-1-5-1-6-3z"></path></svg>`;
+}
+function renderTodaysPlan(){
+  const root=$("#todaysPlanItems");
+  if(!root) return;
+  const s=currentPlannedSession();
+  if(!s){
+    root.innerHTML='<div class="empty-copy">No planned session yet.</div>';
+    return;
+  }
+  const items=[];
+  items.push({
+    kind:s.kind,
+    title:s.type,
+    detail:`Week ${s.week} · ${s.detail}`,
+    action:"Today",
+    protocol:null
+  });
+  if(s.kind==="hard"){
+    items.push({kind:"breath",title:"Pre-Workout Primer",detail:"Before workout · 3 min",action:"Before",protocol:"primer"});
+    items.push({kind:"breath",title:"5.5 Recovery",detail:"After workout · 6 min",action:"After",protocol:"recovery55"});
+  }else if(s.kind==="aerobic"){
+    items.push({kind:"breath",title:"5.5 Recovery",detail:"After workout · 6 min",action:"After",protocol:"recovery55"});
+  }else if(s.kind==="recovery"){
+    items.push({kind:"breath",title:"Extended Exhale",detail:"During or after · 8 min",action:"Recovery",protocol:"extended"});
+  }else if(s.kind==="breath"){
+    items.push({kind:"breath",title:"CO₂ Comfort",detail:"Breathing session · 8 min",action:"Start",protocol:"co2"});
+  }
+  root.innerHTML=items.map(item=>`<div class="plan-item" ${item.protocol?`data-protocol="${item.protocol}"`:""}>
+    <div class="plan-item-icon">${planItemIcon(item.kind)}</div>
+    <div class="plan-item-copy"><strong>${item.title}</strong><small>${item.detail}</small></div>
+    <span class="plan-item-action">${item.action}</span>
+  </div>`).join("");
+  root.querySelectorAll("[data-protocol]").forEach(row=>row.addEventListener("click",()=>{
+    state.selectedProtocol=row.dataset.protocol;saveState();navigate("breathe");
+    requestAnimationFrame(()=>{setBreathPlayer(selectedProtocol());renderProtocols();});
+  }));
+}
+function applyTodayLayout(){
+  const screen=document.querySelector('[data-screen="today"]');
+  if(!screen)return;
+  const layout=Array.isArray(state.todayLayout)?state.todayLayout:defaults.todayLayout;
+  const widgets=[...screen.querySelectorAll(".today-widget")];
+  const note=screen.querySelector("#todayEditHint");
+  layout.forEach(id=>{
+    const el=screen.querySelector(`.today-widget[data-widget-id="${id}"]`);
+    if(el) screen.insertBefore(el,note);
+  });
+  widgets.filter(w=>!layout.includes(w.dataset.widgetId)).forEach(w=>screen.insertBefore(w,note));
+}
+let todayEditMode=false,todayHoldTimer=null,todayDragging=null;
+function setTodayEditMode(on){
+  todayEditMode=on;
+  const screen=document.querySelector('[data-screen="today"]');
+  if(!screen)return;
+  screen.classList.toggle("today-edit-mode",on);
+  $("#todayEditHint").hidden=!on;
+}
+function persistTodayOrder(){
+  const screen=document.querySelector('[data-screen="today"]');
+  state.todayLayout=[...screen.querySelectorAll(".today-widget")].map(x=>x.dataset.widgetId);
+  saveState();
+}
+function wireTodayReorder(){
+  const screen=document.querySelector('[data-screen="today"]');
+  if(!screen)return;
+  screen.querySelectorAll(".today-widget").forEach(widget=>{
+    widget.addEventListener("pointerdown",e=>{
+      if(e.target.closest("button,input,select,a"))return;
+      todayHoldTimer=setTimeout(()=>{
+        setTodayEditMode(true);
+        todayDragging=widget;
+        widget.classList.add("dragging","editing");
+        try{widget.setPointerCapture(e.pointerId)}catch(_){}
+      },450);
+    });
+    widget.addEventListener("pointermove",e=>{
+      if(!todayDragging||todayDragging!==widget)return;
+      const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(".today-widget");
+      if(target&&target!==widget&&target.parentElement===widget.parentElement){
+        const rect=target.getBoundingClientRect();
+        if(e.clientY<rect.top+rect.height/2) target.before(widget); else target.after(widget);
+      }
+    });
+    const end=()=>{
+      clearTimeout(todayHoldTimer);
+      if(todayDragging===widget){
+        widget.classList.remove("dragging","editing");
+        todayDragging=null;persistTodayOrder();
+      }
+    };
+    widget.addEventListener("pointerup",end);
+    widget.addEventListener("pointercancel",end);
+  });
 }
 
 function renderToday(){
@@ -398,48 +514,53 @@ function selectedProtocol(){ return protocols.find(p=>p.id===state.selectedProto
 function renderProtocols(){
   const currentIndex=Math.max(0,protocols.findIndex(p=>p.id===state.selectedProtocol));
   $("#protocolCounter").textContent=`${currentIndex+1} / ${protocols.length}`;
-  $("#protocolCards").innerHTML=protocols.map((p,i)=>`<button class="protocol-card ${p.id===state.selectedProtocol?"active":""}" data-protocol="${p.id}" data-index="${i}">
-    <div><p class="eyebrow">${p.category}</p><strong>${p.name}</strong></div>
-    <span>${p.minutes} min · ${p.desc}</span>
-  </button>`).join("");
-  $$("[data-protocol]").forEach(b=>b.addEventListener("click",()=>{
-    if(breathRuntime.running) stopBreath(false);
-    state.selectedProtocol=b.dataset.protocol;
-    saveState();
-    setBreathPlayer(selectedProtocol());
-    renderProtocols();
-    requestAnimationFrame(()=>b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}));
+  $("#protocolCards").innerHTML=protocols.map((p,i)=>`<button data-protocol="${p.id}" data-index="${i}" tabindex="-1">${p.name}</button>`).join("");
+  $("#protocolDots").innerHTML=protocols.map((p,i)=>`<button class="protocol-dot ${i===currentIndex?"active":""}" data-dot-index="${i}" aria-label="${p.name}"></button>`).join("");
+  $$("[data-dot-index]").forEach(dot=>dot.addEventListener("click",()=>{
+    selectProtocolByIndex(Number(dot.dataset.dotIndex));
   }));
   setBreathPlayer(selectedProtocol(), false);
-  const carousel=$("#protocolCards");
-  let scrollTimer=null;
-  carousel.onscroll=()=>{
-    clearTimeout(scrollTimer);
-    scrollTimer=setTimeout(()=>{
-      const cards=[...carousel.querySelectorAll(".protocol-card")];
-      if(!cards.length)return;
-      const center=carousel.scrollLeft+carousel.clientWidth/2;
-      let nearest=cards[0],best=Infinity;
-      cards.forEach(card=>{
-        const cardCenter=card.offsetLeft+card.offsetWidth/2;
-        const dist=Math.abs(cardCenter-center);
-        if(dist<best){best=dist;nearest=card;}
-      });
-      const id=nearest.dataset.protocol;
-      if(id && id!==state.selectedProtocol){
-        if(breathRuntime.running) stopBreath(false);
-        state.selectedProtocol=id;
-        saveState();
-        setBreathPlayer(selectedProtocol());
-        cards.forEach(card=>card.classList.toggle("active",card===nearest));
-        $("#protocolCounter").textContent=`${Number(nearest.dataset.index)+1} / ${protocols.length}`;
-      }
-    },100);
-  };
+  updateBreatheHeader();
 }
+
+function updateBreatheHeader(){
+  const p=selectedProtocol();
+  $("#breathCategoryTop").textContent=p.category.toUpperCase();
+  $("#breatheTitle").textContent=p.name;
+  const idx=protocols.findIndex(x=>x.id===p.id);
+  $("#protocolCounter").textContent=`${idx+1} / ${protocols.length}`;
+  $$(".protocol-dot").forEach((d,i)=>d.classList.toggle("active",i===idx));
+}
+function selectProtocolByIndex(index){
+  const i=(index+protocols.length)%protocols.length;
+  if(breathRuntime.running) stopBreath(false);
+  state.selectedProtocol=protocols[i].id;
+  saveState();
+  setBreathPlayer(protocols[i]);
+  renderProtocols();
+}
+function selectAdjacentProtocol(delta){
+  const idx=protocols.findIndex(p=>p.id===state.selectedProtocol);
+  selectProtocolByIndex(idx+delta);
+}
+let breatheSwipeStartX=null,breatheSwipeStartY=null;
+function wireBreatheSwipe(){
+  const player=$("#breathPlayer");
+  player.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1)return;
+    breatheSwipeStartX=e.touches[0].clientX;breatheSwipeStartY=e.touches[0].clientY;
+  },{passive:true});
+  player.addEventListener("touchend",e=>{
+    if(breatheSwipeStartX==null)return;
+    const t=e.changedTouches[0],dx=t.clientX-breatheSwipeStartX,dy=t.clientY-breatheSwipeStartY;
+    breatheSwipeStartX=breatheSwipeStartY=null;
+    if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.3) selectAdjacentProtocol(dx<0?1:-1);
+  },{passive:true});
+  $("#breathePrev").addEventListener("click",()=>selectAdjacentProtocol(-1));
+}
+
 function setBreathPlayer(p, reset=true){
-  $("#breathCategory").textContent=p.category;
-  $("#breathProtocolName").textContent=p.name;
+  updateBreatheHeader();
   $("#breathInstruction").textContent=p.instruction;
   if(!breathRuntime.running){
     $("#breathRemaining").textContent=formatTimer(p.minutes*60);
@@ -687,6 +808,7 @@ function openProfile(){
 }
 function closeProfile(){ $("#modalBackdrop").hidden=true; }
 $("#profileButton").addEventListener("click",openProfile);
+$("#doneTodayEdit").addEventListener("click",()=>setTodayEditMode(false));
 $("#healthConnectButton").addEventListener("click",explainHealthConnection);
 $("#profileHealthButton").addEventListener("click",explainHealthConnection);
 $("#closeProfile").addEventListener("click",closeProfile);
@@ -735,6 +857,8 @@ window.addEventListener("orientationchange",()=>{ if(window.matchMedia("(orienta
 breathRuntime.audio=state.settings.sound!==false;
 breathRuntime.haptics=state.settings.haptics!==false;
 renderAll();
+wireTodayReorder();
+wireBreatheSwipe();
 tryLockPortrait();
 if(!state.profile.age && !state.profile.name) setTimeout(openProfile,350);
 

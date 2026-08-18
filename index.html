@@ -24,7 +24,13 @@
         <span id="headerSubtitle">Aerobic performance</span>
       </div>
     </div>
-    <button id="profileButton" class="icon-button settings-button" aria-label="Settings"><span class="gear-icon" aria-hidden="true">⚙</span></button>
+    <button id="profileButton" class="icon-button settings-button" aria-label="Settings">
+      <svg class="settings-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.25"></circle>
+        <path d="M12 2.4v2.1M12 19.5v2.1M21.6 12h-2.1M4.5 12H2.4M18.8 5.2l-1.5 1.5M6.7 17.3l-1.5 1.5M18.8 18.8l-1.5-1.5M6.7 6.7 5.2 5.2"></path>
+        <circle cx="12" cy="12" r="7.1"></circle>
+      </svg>
+    </button>
   </header>
 
   <main class="app-shell">
@@ -41,7 +47,7 @@
             <p class="eyebrow">APPLE HEALTH</p>
             <h2 id="healthStatusTitle">Connect your health data</h2>
           </div>
-          <span id="healthStatusBadge" class="tier-badge">Not connected</span>
+          <span id="healthStatusBadge" class="tier-badge health-status-badge">Not connected</span>
         </div>
         <p id="healthStatusCopy" class="muted-copy">In the native iPhone build, Apple Health will supply your latest VO₂ max, workouts, resting heart rate, HRV, and other available metrics automatically.</p>
         <button id="healthConnectButton" class="secondary-button">Connect Apple Health</button>
@@ -83,6 +89,21 @@
         </article>
       </div>
 
+      <section class="today-widget" data-widget-id="todayPlan">
+        <article class="card todays-plan-card">
+          <div class="widget-drag-handle" aria-hidden="true">≡</div>
+          <div class="card-heading-row">
+            <div>
+              <p class="eyebrow">TODAY’S PLAN</p>
+              <h2 id="todaysPlanTitle">Your next session</h2>
+            </div>
+            <button class="text-button" data-go="train">View full plan</button>
+          </div>
+          <div id="todaysPlanItems" class="todays-plan-list"></div>
+        </article>
+      </section>
+
+      <section class="today-widget" data-widget-id="trainingLoad">
       <article class="card training-load-card">
         <div class="card-heading-row">
           <div>
@@ -106,7 +127,9 @@
         <div class="load-meter"><div id="weeklyLoadMeter"></div></div>
         <p id="weeklyLoadStatus" class="small-copy">Complete sessions to build your weekly load.</p>
       </article>
+      </section>
 
+      <section class="today-widget" data-widget-id="nextAction">
       <article class="card">
         <div class="card-heading-row">
           <div>
@@ -118,7 +141,9 @@
         <p id="nextActionCopy" class="muted-copy">Tell us about your baseline so the plan can adapt to you.</p>
         <button id="nextActionButton" class="primary-button">Get started</button>
       </article>
+      </section>
 
+      <section class="today-widget" data-widget-id="vo2Trend">
       <article class="card">
         <div class="card-heading-row">
           <div>
@@ -129,6 +154,12 @@
         </div>
         <div id="todayChart" class="chart" aria-label="VO2 max trend chart"></div>
       </article>
+      </section>
+
+      <div id="todayEditHint" class="today-edit-hint" hidden>
+        <span>Drag sections to reorder</span>
+        <button id="doneTodayEdit" class="text-button">Done</button>
+      </div>
 
       <div class="health-note">
         <strong>Performance, not diagnosis.</strong>
@@ -180,16 +211,17 @@
     </section>
 
     <section class="screen" data-screen="breathe" aria-labelledby="breatheTitle">
-      <p class="eyebrow">BREATH TRAINING</p>
-      <h1 id="breatheTitle">Breathe with purpose.</h1>
-      <p class="lede">Follow the wave. Swipe below to change your session.</p>
+      <div class="breathe-screen-header">
+        <button id="breathePrev" class="breathe-header-button" aria-label="Previous breathing session">‹</button>
+        <div>
+          <p id="breathCategoryTop" class="eyebrow">TOLERANCE</p>
+          <h1 id="breatheTitle">CO₂ Comfort</h1>
+        </div>
+        <button id="breatheMore" class="breathe-header-button" aria-label="Breathing options">•••</button>
+      </div>
 
       <article id="breathPlayer" class="card breath-player featured">
-        <div class="card-heading-row">
-          <div>
-            <p id="breathCategory" class="eyebrow">RECOVERY</p>
-            <h2 id="breathProtocolName">5.5 Recovery</h2>
-          </div>
+        <div class="breath-timer-row">
           <div id="breathRemaining" class="timer">6:00</div>
         </div>
 
@@ -222,16 +254,11 @@
         <p id="breathInstruction" class="small-copy">Breathe gently. Do not force unusually large breaths.</p>
       </article>
 
-      <section class="breath-carousel-section">
-        <div class="card-heading-row">
-          <div>
-            <p class="eyebrow">CHOOSE SESSION</p>
-            <h2>Swipe to explore</h2>
-          </div>
-          <span id="protocolCounter" class="small-copy">1 / 5</span>
-        </div>
-        <div id="protocolCards" class="protocol-carousel" aria-label="Breathing protocols"></div>
-      </section>
+      <div class="breath-pagination" aria-label="Breathing session selector">
+        <div id="protocolDots" class="protocol-dots"></div>
+        <span id="protocolCounter" class="sr-only">1 / 5</span>
+      </div>
+      <div id="protocolCards" class="protocol-carousel-hidden" aria-hidden="true"></div>
 
       <article class="card">
         <div class="card-heading-row">
@@ -382,19 +409,34 @@
 
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button class="active" data-tab="today">
-      <span class="nav-icon nav-home" aria-hidden="true"></span><small>Today</small>
+      <svg class="nav-svg nav-svg-home" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="home-fill" d="M3.6 10.8 12 3.5l8.4 7.3v9.3h-5.3v-6H8.9v6H3.6z"></path>
+      </svg>
+      <small>Today</small>
     </button>
     <button data-tab="train">
-      <span class="nav-icon nav-train" aria-hidden="true"></span><small>Train</small>
+      <svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 18 18.5 4.5M11 4.5h7.5V12"></path>
+      </svg>
+      <small>Train</small>
     </button>
     <button data-tab="breathe">
-      <span class="nav-icon nav-breathe" aria-hidden="true"><i></i><i></i></span><small>Breathe</small>
+      <svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.2"></circle>
+      </svg>
+      <small>Breathe</small>
     </button>
     <button data-tab="log">
-      <span class="nav-icon nav-log" aria-hidden="true"></span><small>Log</small>
+      <svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      <small>Log</small>
     </button>
     <button data-tab="progress">
-      <span class="nav-icon bar-chart-icon" aria-hidden="true"><i></i><i></i><i></i></span><small>Progress</small>
+      <svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 19V12M12 19V8M19 19V4"></path>
+      </svg>
+      <small>Progress</small>
     </button>
   </nav>
 </div>
