@@ -1,43 +1,35 @@
-# VO₂ Breathe PWA
+# VO₂ Breathe — PWA v2
 
-Upload the contents of this folder to the **root** of your GitHub repository.
+This is the second development build of VO₂ Breathe.
 
-Files:
-- `index.html`
-- `manifest.webmanifest`
-- `sw.js`
-- `icon.svg`
+## New in v2
+- Personal profile / onboarding
+- Persistent VO₂ milestone history
+- Workout logging and history
+- 1.5-mile run and Rockport field-test calculators
+- Adaptive 4-week training plan with completion tracking
+- Five guided breathing protocols
+- Drift-resistant breathing timer and animation
+- Optional Web Audio phase cues
+- Screen Wake Lock where the browser supports it
+- Breathing session history and weekly consistency
+- Optional comfortable-exhale-pause tracking
+- Progress dashboard
+- Offline PWA shell
+- iPhone Home Screen PNG icon
+- Migration of the original prototype's saved VO₂ value when available
 
-## Enable GitHub Pages
+## Update your GitHub Pages site
+Replace the files in the root of `vo2-breathe` with the files in this package.
 
-In the repository:
-1. Open **Settings**
-2. Open **Pages**
-3. Under **Build and deployment**, choose **Deploy from a branch**
-4. Choose branch **main**
-5. Choose folder **/(root)**
-6. Save
+GitHub Pages is already configured, so after the commit the existing site URL should refresh automatically.
 
-GitHub will provide the live URL after the Pages deployment finishes.
+If your installed Home Screen copy appears stale, open the site once in Safari, refresh, and then reopen the Home Screen app.
 
-## Install on iPhone
+## Data
+This development build stores profile and fitness data in browser localStorage on the device. It does not send health data to a server.
 
-1. Open the live GitHub Pages URL in Safari
-2. Tap **Share**
-3. Tap **Add to Home Screen**
-4. Launch VO₂ Breathe from the new Home Screen icon
+Native Apple Health / HealthKit sync will be part of the later iOS build.
 
-## Current prototype features
-
-- Today dashboard
-- VO₂ max score and tier
-- 6-month trend
-- Interactive breathing session
-- Multiple breathing protocols
-- 1.5-mile run estimate
-- Rockport one-mile walk estimate
-- 4-week training plan
-- Local persistence of the latest VO₂ result
-- Offline shell via service worker
-
-This is a prototype and does not yet include native HealthKit access.
+## Health positioning
+Field-test VO₂ results are estimates. Breathing protocols are designed for control/recovery/performance support. The app does not claim breathing exercises alone will increase VO₂ max.
