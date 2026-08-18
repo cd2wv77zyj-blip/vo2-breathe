@@ -1,8 +1,12 @@
-# VO₂ Breathe PWA v7.8
+# VO₂ Breathe PWA v7.9
 
-Fix:
-- v7.7 accidentally pinned the Soft Wave with `transform: scale(.82) !important`.
-- That CSS rule overrode the JavaScript requestAnimationFrame scaling.
-- v7.8 removes that override so the Soft Wave can animate again.
-- Keeps the approved v7.7 Soft Wave design and the larger 82% -> 114% breathing range.
-- All other interactions remain unchanged.
+Final PWA polish before native feature integration:
+- Replaces the app/Home Screen icon with the minimal Deep Space Soft Wave concept.
+- Keeps all v7.8 Breathe animation, carousel, Today reorder, settings, and onboarding behavior unchanged.
+- Uses new v7.9 asset names/cache so the icon update refreshes cleanly.
+
+Next phase:
+- Native Apple Health / HealthKit integration
+- Notifications
+- Native haptics
+- Apple Watch sensor integration

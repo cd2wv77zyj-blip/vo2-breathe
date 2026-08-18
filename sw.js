@@ -1,5 +1,5 @@
-const CACHE="vo2-breathe-v7-8";
-const ASSETS=["./","./index.html","./styles-v7-8.css?v=7.8.0","./app-v7-8.js?v=7.8.0","./manifest.webmanifest","./icon-192.png","./icon-512.png","./apple-touch-icon.png"];
+const CACHE="vo2-breathe-v7-9";
+const ASSETS=["./","./index.html","./styles-v7-9.css?v=7.9.0","./app-v7-9.js?v=7.9.0","./manifest.webmanifest","./icon-192.png","./icon-512.png","./apple-touch-icon.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting();});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener("fetch",e=>{
