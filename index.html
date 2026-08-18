@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f7f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VO₂ Breathe">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>VO₂ Breathe</title>
+<style>
+:root{
+  --bg:#f4f7f5;--card:#fff;--text:#132019;--muted:#6c7a73;--accent:#16784a;
+  --soft:#dff3e8;--border:#dce5e0;--track:#dfe8e3;--danger:#a63232;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,select{font:inherit}
+button{touch-action:manipulation}
+.app{max-width:640px;margin:0 auto;padding:20px 18px calc(104px + env(safe-area-inset-bottom))}
+.screen{display:none}
+.screen.active{display:block}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:1.35px;color:var(--muted);margin-top:6px}
+h1{font-size:34px;line-height:1.05;letter-spacing:-1px;margin:5px 0 18px}
+h2{font-size:20px;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:26px;padding:20px;margin:12px 0}
+.score{font-size:62px;font-weight:850;letter-spacing:-3px;margin-top:5px}
+.muted{color:var(--muted)}
+.tier{display:inline-block;background:var(--soft);color:var(--accent);font-weight:800;padding:7px 12px;border-radius:999px;margin-top:12px}
+.track{height:10px;background:var(--track);border-radius:999px;overflow:hidden;margin-top:18px}
+.fill{height:100%;background:var(--accent);border-radius:999px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:13px;min-height:112px}
+.metric strong{display:block;font-size:26px;margin:13px 0 2px}
+.action{width:100%;border:0;border-radius:16px;padding:15px 18px;font-weight:800;cursor:pointer}
+.action.primary{background:var(--accent);color:white}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:rgba(255,255,255,.97);border-top:1px solid var(--border);padding:9px 8px calc(11px + env(safe-area-inset-bottom));z-index:50}
+.nav-inner{display:flex;width:min(640px,100%)}
+.nav button{flex:1;border:0;background:none;color:var(--muted);padding:10px 5px;font-size:12px;font-weight:800;cursor:pointer}
+.nav button.active{color:var(--accent)}
+.trend{height:170px;display:flex;align-items:flex-end;gap:8px;padding-top:15px}
+.barwrap{flex:1;text-align:center;color:var(--muted);font-size:10px}
+.bar{width:66%;margin:0 auto;background:var(--track);border-radius:8px 8px 3px 3px}
+.orb-zone{height:300px;display:flex;align-items:center;justify-content:center;position:relative}
+.orb{width:200px;height:200px;border-radius:50%;background:var(--soft);border:2px solid var(--accent);transform:scale(.62)}
+.orb-text{position:absolute;text-align:center}
+.phase{font-size:27px;font-weight:850}
+.timer{font-size:39px;font-weight:850;text-align:center;margin-top:7px}
+.protocol{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:15px;margin:9px 0;cursor:pointer;width:100%}
+.protocol.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.protocol small{display:block;color:var(--muted);margin-top:3px}
+label{display:block;color:var(--muted);font-size:13px;font-weight:800;margin:12px 0 5px}
+input,select{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:13px;padding:12px 13px;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.result{margin-top:12px;background:var(--soft);color:var(--accent);font-weight:800;border-radius:14px;padding:12px;display:none}
+.result.show{display:block}
+.error{color:var(--danger);font-weight:700;margin-top:10px}
+.small{font-size:12px;line-height:1.5;color:var(--muted)}
+.week{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:14px;margin:12px 0}
+.day{display:grid;grid-template-columns:40px 88px 1fr;gap:8px;padding:10px 0;border-top:1px solid var(--border);font-size:13px}
+@media(max-width:430px){.grid{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.day{grid-template-columns:38px 78px 1fr}}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0b0e0d;--card:#141817;--text:#f3f6f4;--muted:#93a09b;--accent:#8fe0b7;--soft:#183a2a;--border:#28312e;--track:#27312d;--danger:#ff9b9b}
+.nav{background:rgba(20,24,23,.97)} .action.primary{color:#0a1a11}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="screen active" data-screen="today">
+    <div class="eyebrow">AEROBIC FITNESS</div>
+    <h1>Your system</h1>
+
+    <div class="card">
+      <div class="eyebrow">VO₂ MAX</div>
+      <div class="score" id="vo2Score">48.7</div>
+      <div class="muted">ml/kg/min</div>
+      <div class="tier" id="tier">Excellent</div>
+      <div class="track"><div class="fill" id="vo2Fill" style="width:69.6%"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="metric"><span class="muted">Resting HR</span><strong>54</strong><span class="muted">bpm</span></div>
+      <div class="metric"><span class="muted">CO₂ tolerance</span><strong>34</strong><span class="muted">sec</span></div>
+      <div class="metric"><span class="muted">Respiration</span><strong>11.2</strong><span class="muted">/min</span></div>
+    </div>
+
+    <div class="card">
+      <strong>6 month trend</strong>
+      <div class="trend" id="trend"></div>
+    </div>
+
+    <button class="action primary" type="button" data-go="breathe">Start today’s breathing</button>
+  </section>
+
+  <section class="screen" data-screen="breathe">
+    <div class="eyebrow">BREATH TRAINING</div>
+    <h1>Breathe for performance</h1>
+
+    <div class="card">
+      <div class="eyebrow" id="protocolName">5.5 RECOVERY</div>
+      <div class="timer" id="timer">6:00</div>
+      <div class="orb-zone">
+        <div class="orb" id="orb"></div>
+        <div class="orb-text">
+          <div class="phase" id="phase" aria-live="polite">Ready</div>
+          <div class="muted" id="cadence">5.5s / 5.5s</div>
+        </div>
+      </div>
+      <button class="action primary" type="button" id="startBreath">Start session</button>
+    </div>
+
+    <h2>Protocols</h2>
+    <div id="protocolList"></div>
+    <p class="small">Stop if you feel dizzy, faint, or uncomfortable. CO₂ work here uses brief, non-maximal pauses.</p>
+  </section>
+
+  <section class="screen" data-screen="test">
+    <div class="eyebrow">FIELD TESTS</div>
+    <h1>Estimate VO₂ max</h1>
+
+    <div class="card">
+      <h2 style="margin-top:0">1.5-mile run</h2>
+      <label for="runTime">Finish time (minutes)</label>
+      <input id="runTime" type="number" inputmode="decimal" step="0.1" value="11.4">
+      <div style="height:12px"></div>
+      <button class="action primary" type="button" id="runCalc">Calculate run estimate</button>
+      <div id="runResult" class="result" aria-live="polite"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Rockport 1-mile walk</h2>
+      <label for="sex">Biological sex used by equation</label>
+      <select id="sex"><option value="male">Male</option><option value="female">Female</option></select>
+      <div class="row">
+        <div><label for="age">Age</label><input id="age" type="number" inputmode="numeric" value="34"></div>
+        <div><label for="weight">Weight (lb)</label><input id="weight" type="number" inputmode="decimal" value="174"></div>
+      </div>
+      <label for="walkTime">Walk time (minutes)</label>
+      <input id="walkTime" type="number" inputmode="decimal" step="0.1" value="13.3">
+      <label for="postHR">Heart rate immediately after walk</label>
+      <input id="postHR" type="number" inputmode="numeric" value="122">
+      <div style="height:12px"></div>
+      <button class="action primary" type="button" id="walkCalc">Calculate walk estimate</button>
+      <div id="walkResult" class="result" aria-live="polite"></div>
+    </div>
+
+    <div id="testError" class="error" aria-live="polite"></div>
+    <p class="small">Field-test values are estimates, not clinical measurements.</p>
+  </section>
+
+  <section class="screen" data-screen="plan">
+    <div class="eyebrow">4-WEEK BUILD</div>
+    <h1>Adaptive aerobic plan</h1>
+    <label for="level">Training level</label>
+    <select id="level">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate" selected>Intermediate</option>
+      <option value="advanced">Advanced</option>
+    </select>
+    <div id="planWrap"></div>
+  </section>
+</main>
+
+<nav class="nav" aria-label="Primary">
+  <div class="nav-inner">
+    <button class="active" type="button" data-tab="today">Today</button>
+    <button type="button" data-tab="breathe">Breathe</button>
+    <button type="button" data-tab="test">Test</button>
+    <button type="button" data-tab="plan">Plan</button>
+  </div>
+</nav>
+
+<script>
+(function(){
+  "use strict";
+
+  var store = {
+    get: function(key, fallback) {
+      try { var v = window.localStorage.getItem(key); return v === null ? fallback : v; }
+      catch (_) { return fallback; }
+    },
+    set: function(key, value) {
+      try { window.localStorage.setItem(key, String(value)); } catch (_) {}
+    }
+  };
+
+  var state = {
+    vo2: Number(store.get("vo2", "48.7")),
+    running: false,
+    selectedProtocol: 0,
+    remaining: 360,
+    phaseTimeout: null,
+    tickInterval: null
+  };
+
+  var protocols = [
+    {name:"5.5 Recovery", sub:"Slow post-workout recovery", inhale:5.5, exhale:5.5, hold:0, minutes:6},
+    {name:"Breathing Efficiency", sub:"Longer controlled exhale", inhale:4, exhale:7, hold:0, minutes:8},
+    {name:"CO₂ Tolerance", sub:"Gentle controlled pauses", inhale:4, exhale:6, hold:2, minutes:8},
+    {name:"Pre-Workout Primer", sub:"Focused rhythmic breathing", inhale:4, exhale:4, hold:0, minutes:3}
+  ];
+
+  function qs(sel){ return document.querySelector(sel); }
+  function qsa(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function currentProtocol(){ return protocols[state.selectedProtocol]; }
+
+  function tier(v){
+    if(v >= 55) return "Superior";
+    if(v >= 48) return "Excellent";
+    if(v >= 40) return "Good";
+    if(v >= 32) return "Fair";
+    return "Developing";
+  }
+
+  function showScreen(name){
+    qsa("[data-screen]").forEach(function(el){ el.classList.toggle("active", el.getAttribute("data-screen") === name); });
+    qsa("[data-tab]").forEach(function(el){ el.classList.toggle("active", el.getAttribute("data-tab") === name); });
+    window.scrollTo(0,0);
+  }
+
+  qsa("[data-tab]").forEach(function(btn){
+    btn.addEventListener("click", function(){ showScreen(btn.getAttribute("data-tab")); });
+  });
+
+  qsa("[data-go]").forEach(function(btn){
+    btn.addEventListener("click", function(){ showScreen(btn.getAttribute("data-go")); });
+  });
+
+  function renderTrend(){
+    var vals = [43.4,44.2,44.8,45.1,46.2,state.vo2];
+    var labels = ["Mar","Apr","May","Jun","Jul","Aug"];
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    qs("#trend").innerHTML = vals.map(function(v,i){
+      var h = 36 + ((v-min)/((max-min)||1))*86;
+      return '<div class="barwrap"><div class="bar" style="height:'+h+'px;'+(i===5?'background:var(--accent);':'')+'"></div>'+labels[i]+'</div>';
+    }).join("");
+  }
+
+  function updateVO2(v){
+    state.vo2 = Math.round(v*10)/10;
+    store.set("vo2", state.vo2);
+    qs("#vo2Score").textContent = state.vo2.toFixed(1);
+    qs("#tier").textContent = tier(state.vo2);
+    qs("#vo2Fill").style.width = Math.min(100, state.vo2/70*100) + "%";
+    renderTrend();
+    renderPlan();
+  }
+
+  function fmt(seconds){
+    return Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
+  }
+
+  function clearBreathTimers(){
+    if(state.phaseTimeout){ clearTimeout(state.phaseTimeout); state.phaseTimeout = null; }
+    if(state.tickInterval){ clearInterval(state.tickInterval); state.tickInterval = null; }
+  }
+
+  function resetBreathVisual(){
+    var p = currentProtocol();
+    var orb = qs("#orb");
+    orb.style.transition = "transform .25s ease";
+    orb.style.transform = "scale(.62)";
+    qs("#phase").textContent = "Ready";
+    qs("#cadence").textContent = p.inhale+"s / "+p.exhale+"s";
+    qs("#startBreath").textContent = "Start session";
+  }
+
+  function stopBreathing(resetTimer){
+    state.running = false;
+    clearBreathTimers();
+    if(resetTimer){
+      state.remaining = currentProtocol().minutes*60;
+      qs("#timer").textContent = fmt(state.remaining);
+    }
+    resetBreathVisual();
+  }
+
+  function scheduleCycle(){
+    if(!state.running) return;
+    var p = currentProtocol(), orb = qs("#orb");
+
+    qs("#phase").textContent = "Inhale";
+    qs("#cadence").textContent = p.inhale+"s";
+    orb.style.transition = "transform "+p.inhale+"s linear";
+    requestAnimationFrame(function(){ orb.style.transform = "scale(1)"; });
+
+    state.phaseTimeout = setTimeout(function(){
+      if(!state.running) return;
+      qs("#phase").textContent = "Exhale";
+      qs("#cadence").textContent = p.exhale+"s";
+      orb.style.transition = "transform "+p.exhale+"s linear";
+      requestAnimationFrame(function(){ orb.style.transform = "scale(.62)"; });
+
+      state.phaseTimeout = setTimeout(function(){
+        if(!state.running) return;
+        if(p.hold > 0){
+          qs("#phase").textContent = "Hold";
+          qs("#cadence").textContent = p.hold+"s";
+          state.phaseTimeout = setTimeout(scheduleCycle, p.hold*1000);
+        } else {
+          scheduleCycle();
+        }
+      }, p.exhale*1000);
+    }, p.inhale*1000);
+  }
+
+  function startBreathing(){
+    if(state.running){
+      stopBreathing(false);
+      return;
+    }
+    state.running = true;
+    qs("#startBreath").textContent = "Pause session";
+    scheduleCycle();
+    state.tickInterval = setInterval(function(){
+      state.remaining -= 1;
+      qs("#timer").textContent = fmt(Math.max(0,state.remaining));
+      if(state.remaining <= 0){
+        stopBreathing(true);
+      }
+    },1000);
+  }
+
+  function selectProtocol(index){
+    stopBreathing(false);
+    state.selectedProtocol = index;
+    var p = currentProtocol();
+    state.remaining = p.minutes*60;
+    qs("#protocolName").textContent = p.name.toUpperCase();
+    qs("#timer").textContent = fmt(state.remaining);
+    resetBreathVisual();
+    renderProtocols();
+  }
+
+  function renderProtocols(){
+    var wrap = qs("#protocolList");
+    wrap.innerHTML = protocols.map(function(p,i){
+      return '<button type="button" class="protocol '+(i===state.selectedProtocol?'selected':'')+'" data-protocol="'+i+'">'+
+        '<span style="text-align:left"><strong>'+p.name+'</strong><small>'+p.sub+'</small></span>'+
+        '<span class="muted">'+p.minutes+' min</span></button>';
+    }).join("");
+    qsa("[data-protocol]").forEach(function(btn){
+      btn.addEventListener("click", function(){ selectProtocol(Number(btn.getAttribute("data-protocol"))); });
+    });
+  }
+
+  function requireRange(n,min,max,msg){
+    if(!Number.isFinite(n) || n < min || n > max) throw new Error(msg);
+  }
+
+  function runEstimate(){
+    qs("#testError").textContent = "";
+    qs("#runResult").classList.remove("show");
+    try{
+      var t = Number(qs("#runTime").value);
+      requireRange(t,6,60,"Enter a realistic 1.5-mile finish time (6–60 minutes).");
+      var v = 3.5 + (483/t);
+      requireRange(v,10,100,"That result is outside a plausible VO₂ max range.");
+      updateVO2(v);
+      qs("#runResult").textContent = "Estimated VO₂ max: "+state.vo2.toFixed(1)+" ml/kg/min · "+tier(state.vo2);
+      qs("#runResult").classList.add("show");
+    }catch(err){
+      qs("#testError").textContent = err.message || "Unable to calculate.";
+    }
+  }
+
+  function walkEstimate(){
+    qs("#testError").textContent = "";
+    qs("#walkResult").classList.remove("show");
+    try{
+      var age = Number(qs("#age").value);
+      var weight = Number(qs("#weight").value);
+      var time = Number(qs("#walkTime").value);
+      var hr = Number(qs("#postHR").value);
+      var sex = qs("#sex").value;
+
+      requireRange(age,13,100,"Enter a realistic age (13–100).");
+      requireRange(weight,66,660,"Enter a realistic weight (66–660 lb).");
+      requireRange(time,7,40,"Enter a realistic 1-mile walk time (7–40 minutes).");
+      requireRange(hr,50,220,"Enter a realistic post-exercise heart rate (50–220 bpm).");
+
+      var v = 132.853 - 0.0769*weight - 0.3877*age + 6.315*(sex==="male"?1:0) - 3.2649*time - 0.1565*hr;
+      requireRange(v,10,100,"That result is outside a plausible VO₂ max range.");
+      updateVO2(v);
+      qs("#walkResult").textContent = "Estimated VO₂ max: "+state.vo2.toFixed(1)+" ml/kg/min · "+tier(state.vo2);
+      qs("#walkResult").classList.add("show");
+    }catch(err){
+      qs("#testError").textContent = err.message || "Unable to calculate.";
+    }
+  }
+
+  function renderPlan(){
+    var level = qs("#level").value;
+    var baseIntervals = level==="beginner"?4:(level==="intermediate"?5:6);
+    var baseZone = level==="beginner"?25:(level==="intermediate"?35:45);
+    var weeks = [1,2,3,4].map(function(w){
+      var reps = w===4 ? baseIntervals+1 : baseIntervals+Math.max(0,w-1);
+      var z = baseZone+(w-1)*5;
+      var days = [
+        ["Mon","Zone 2",z+" min easy aerobic + 5 min recovery breathing"],
+        ["Tue","Breath","8 min controlled breathing / CO₂ tolerance"],
+        ["Wed","Intervals",reps+" × 3 min hard / 3 min easy + 3 min breathing primer"],
+        ["Thu","Recovery","20–30 min easy movement + 5.5 breaths/min"],
+        ["Fri","Zone 2",(z+10)+" min easy aerobic"],
+        ["Sat","Breath","10 min breathing efficiency"],
+        ["Sun","Rest","Rest or gentle walk"]
+      ];
+      return '<div class="week"><h2 style="margin:0 0 8px">Week '+w+'</h2>'+
+        days.map(function(d){return '<div class="day"><strong>'+d[0]+'</strong><strong>'+d[1]+'</strong><span>'+d[2]+'</span></div>';}).join("")+
+        '</div>';
+    }).join("");
+    qs("#planWrap").innerHTML = weeks;
+  }
+
+  qs("#startBreath").addEventListener("click", startBreathing);
+  qs("#runCalc").addEventListener("click", runEstimate);
+  qs("#walkCalc").addEventListener("click", walkEstimate);
+  qs("#level").addEventListener("change", renderPlan);
+
+  renderProtocols();
+  updateVO2(state.vo2);
+  state.remaining = currentProtocol().minutes*60;
+  qs("#timer").textContent = fmt(state.remaining);
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
