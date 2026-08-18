@@ -1,11 +1,9 @@
-# VO₂ Breathe PWA v7.2
+# VO₂ Breathe PWA v7.3
 
-Changes:
-- Removes the repeated VO₂ Breathe app header from all tabs; settings remains globally accessible.
-- Breathe screen rebuilt to more closely match the approved mockup: larger multi-wave circle, dots immediately below, pattern, Watch/HRV cards, then Start Session.
-- Removes Breathe back arrow and three-dot controls; horizontal swipe and dots select sessions.
-- Standardizes the 5.5/6-minute recovery exercise name to “Recovery Breathing.”
-- Plan Preferences in Settings now jumps to and highlights the editable plan controls.
-- Reworked Today long-press reorder for iOS touch events.
-- Fixed two-column Log form sizing/date-field overflow on iPhone.
-- New versioned assets and cache v7.2 force the update.
+- Uses Wave Circle option #7: Soft Wave.
+- Soft Wave expands on inhale and contracts on exhale using the active protocol cadence.
+- Start Session and guidance moved above Apple Watch HR / HRV cards.
+- Breathing protocol swipes now visibly drag, fade, slide out, and slide the next protocol in.
+- Dot-based protocol changes use the same transition.
+- Today widget reordering now animates surrounding widgets into place with FLIP motion, while the held widget visibly lifts.
+- New v7.3 asset names/cache force refresh.

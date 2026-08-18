@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="VO₂ Breathe">
   <meta name="description" content="Track VO₂ max, train aerobic fitness, and practice performance-focused breathing.">
-  <meta name="vo2-breathe-build" content="7.2.0">
+  <meta name="vo2-breathe-build" content="7.3.0">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles-v7-2.css?v=7.2.0">
+  <link rel="stylesheet" href="./styles-v7-3.css?v=7.3.0">
   <title>VO₂ Breathe</title>
 </head>
 <body>
@@ -212,14 +212,13 @@
 
       <article id="breathPlayer" class="breath-player featured">
         <div class="orb-stage">
-          <div id="breathOrb" class="breath-orb wave-circle">
-            <span class="wave-ring wave-ring-a"></span>
-            <span class="wave-ring wave-ring-b"></span>
-            <span class="wave-ring wave-ring-c"></span>
-            <span class="wave-ring wave-ring-d"></span>
-            <span class="wave-ring wave-ring-e"></span>
-            <span class="wave-ring wave-ring-f"></span>
-            <span class="wave-ring wave-ring-g"></span>
+          <div id="breathOrb" class="breath-orb wave-circle soft-wave-circle">
+            <span class="soft-wave soft-wave-a"></span>
+            <span class="soft-wave soft-wave-b"></span>
+            <span class="soft-wave soft-wave-c"></span>
+            <span class="soft-wave soft-wave-d"></span>
+            <span class="soft-wave soft-wave-e"></span>
+            <span class="soft-wave soft-wave-f"></span>
           </div>
           <div class="orb-copy">
             <span id="breathPhase" class="breath-phase-label">Ready</span>
@@ -237,16 +236,16 @@
         <div id="breathRemaining" class="timer breath-total-time">6:00</div>
         <div class="session-progress"><div id="breathProgress" class="session-progress-fill"></div></div>
 
-        <div class="live-sensor-preview two mockup-sensors">
-          <div><span>Apple Watch HR</span><strong id="watchHr">—</strong><small>bpm</small></div>
-          <div><span>Post-session HRV</span><strong id="watchHrv">—</strong><small>ms</small></div>
-        </div>
-
         <div class="player-controls single">
           <button id="breathStart" class="primary-button">Start session</button>
         </div>
 
         <p id="breathInstruction" class="small-copy breath-guidance">Breathe gently. Do not force unusually large breaths.</p>
+
+        <div class="live-sensor-preview two mockup-sensors">
+          <div><span>Apple Watch HR</span><strong id="watchHr">—</strong><small>bpm</small></div>
+          <div><span>Post-session HRV</span><strong id="watchHrv">—</strong><small>ms</small></div>
+        </div>
       </article>
 
       <div id="protocolCards" class="protocol-carousel-hidden" aria-hidden="true"></div>
@@ -560,7 +559,7 @@
       </div>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./app-v7-2.js?v=7.2.0"></script>
+<script src="./app-v7-3.js?v=7.3.0"></script>
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
