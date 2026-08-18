@@ -1,9 +1,9 @@
-# VO₂ Breathe PWA v7.5
+# VO₂ Breathe PWA v7.6
 
-- Keeps v7.4 carousel and Today drag/reorder behavior unchanged.
-- Adds a fixed-height guidance lane so HR and HRV cards no longer jump vertically as exercise copy changes.
-- Restores the original-style slow grow/shrink breathing behavior.
-- Soft Wave grows continuously from 90% to 107.5% over the full inhale.
-- Soft Wave shrinks continuously back to 90% over the full exhale.
-- Any pause remains at the smaller exhale size.
-- New v7.5 asset filenames/cache force refresh.
+- Replaces the Breathe circle with a closer SVG interpretation of mockup #7 Soft Wave.
+- Uses broad translucent ribbon layers rather than thin line loops.
+- Breath scaling is now driven frame-by-frame with requestAnimationFrame.
+- The ring expands continuously for the full inhale and contracts continuously for the full exhale.
+- Uses a sine ease for soft, natural acceleration/deceleration at phase boundaries.
+- Keeps v7.5 layout, carousel behavior, onboarding, and Today drag behavior unchanged.
+- New v7.6 asset names/cache force refresh.
