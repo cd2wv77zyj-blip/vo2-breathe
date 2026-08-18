@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0e6b45">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,7 +24,7 @@
         <span id="headerSubtitle">Aerobic performance</span>
       </div>
     </div>
-    <button id="profileButton" class="icon-button settings-button" aria-label="Settings"><span class="gear-icon" aria-hidden="true">⚙︎</span></button>
+    <button id="profileButton" class="icon-button settings-button" aria-label="Settings"><span class="gear-icon" aria-hidden="true">⚙</span></button>
   </header>
 
   <main class="app-shell">
@@ -181,12 +181,10 @@
 
     <section class="screen" data-screen="breathe" aria-labelledby="breatheTitle">
       <p class="eyebrow">BREATH TRAINING</p>
-      <h1 id="breatheTitle">Train breathing control.</h1>
-      <p class="lede">Choose a purpose, then follow the visual and optional audio cues.</p>
+      <h1 id="breatheTitle">Breathe with purpose.</h1>
+      <p class="lede">Follow the wave. Swipe below to change your session.</p>
 
-      <div id="protocolCards" class="protocol-grid"></div>
-
-      <article id="breathPlayer" class="card breath-player">
+      <article id="breathPlayer" class="card breath-player featured">
         <div class="card-heading-row">
           <div>
             <p id="breathCategory" class="eyebrow">RECOVERY</p>
@@ -223,6 +221,17 @@
 
         <p id="breathInstruction" class="small-copy">Breathe gently. Do not force unusually large breaths.</p>
       </article>
+
+      <section class="breath-carousel-section">
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">CHOOSE SESSION</p>
+            <h2>Swipe to explore</h2>
+          </div>
+          <span id="protocolCounter" class="small-copy">1 / 5</span>
+        </div>
+        <div id="protocolCards" class="protocol-carousel" aria-label="Breathing protocols"></div>
+      </section>
 
       <article class="card">
         <div class="card-heading-row">
@@ -372,11 +381,21 @@
   </main>
 
   <nav class="bottom-nav" aria-label="Primary navigation">
-    <button class="active" data-tab="today"><span>⌂</span><small>Today</small></button>
-    <button data-tab="train"><span>↗</span><small>Train</small></button>
-    <button data-tab="breathe"><span>◉</span><small>Breathe</small></button>
-    <button data-tab="log"><span>＋</span><small>Log</small></button>
-    <button data-tab="progress"><span class="bar-chart-icon" aria-hidden="true"><i></i><i></i><i></i></span><small>Progress</small></button>
+    <button class="active" data-tab="today">
+      <span class="nav-icon nav-home" aria-hidden="true"></span><small>Today</small>
+    </button>
+    <button data-tab="train">
+      <span class="nav-icon nav-train" aria-hidden="true"></span><small>Train</small>
+    </button>
+    <button data-tab="breathe">
+      <span class="nav-icon nav-breathe" aria-hidden="true"><i></i><i></i></span><small>Breathe</small>
+    </button>
+    <button data-tab="log">
+      <span class="nav-icon nav-log" aria-hidden="true"></span><small>Log</small>
+    </button>
+    <button data-tab="progress">
+      <span class="nav-icon bar-chart-icon" aria-hidden="true"><i></i><i></i><i></i></span><small>Progress</small>
+    </button>
   </nav>
 </div>
 
@@ -505,7 +524,13 @@
   </section>
 </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div class="landscape-lock" aria-hidden="true">
+      <div>
+        <strong>Portrait only</strong>
+        <span>Rotate your iPhone upright to continue.</span>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="./app.js"></script>
 <script>
 if ("serviceWorker" in navigator) {

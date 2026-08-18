@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "background_color": "#f4f7f5",
   "theme_color": "#0e6b45",
-  "description": "VO₂ max tracking, combined workout and breathwork training load, customizable plans, and performance-focused breathing.",
+  "description": "Portrait-only VO₂ max and breath-training PWA with swipeable guided breathing sessions and adaptive training.",
   "icons": [
     {
       "src": "./icon-192.png",

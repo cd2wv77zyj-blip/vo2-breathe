@@ -6,7 +6,7 @@ const KEY = "vo2BreatheV2";
 const LEGACY_VO2 = "vo2";
 
 const defaults = {
-  version: 5,
+  version: 6,
   health: {
     connected: false,
     latestVo2: null,
@@ -60,11 +60,11 @@ function validNumber(v,min,max){ const n=Number(v); return Number.isFinite(n)&&n
 function loadState(){
   try{
     const parsed = JSON.parse(localStorage.getItem(KEY) || "null");
-    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4 || parsed.version === 5)) {
+    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4 || parsed.version === 5 || parsed.version === 6)) {
       return {
         ...defaults,
         ...parsed,
-        version: 5,
+        version: 6,
         health: {...defaults.health, ...(parsed.health || {})},
         settings: {...defaults.settings, ...(parsed.settings || {})},
         profile:{...defaults.profile,...parsed.profile}
@@ -341,16 +341,19 @@ function generatePlan(){
 
 function renderBreathCompanion(session){
   if(session.kind==="hard"){
-    return `<div class="breath-companion"><span class="breath-tag">Pre · 3 min Primer</span><span class="breath-tag">Post · 6 min Recovery</span></div>`;
+    return `<div class="breath-companion">
+      <button class="breath-tag" data-breath-id="primer">Pre · 3 min Primer</button>
+      <button class="breath-tag" data-breath-id="recovery55">Post · 6 min Recovery</button>
+    </div>`;
   }
   if(session.kind==="aerobic"){
-    return `<div class="breath-companion"><span class="breath-tag">Post · 5.5 Recovery</span></div>`;
+    return `<div class="breath-companion"><button class="breath-tag" data-breath-id="recovery55">Post · 5.5 Recovery</button></div>`;
   }
   if(session.kind==="recovery"){
-    return `<div class="breath-companion"><span class="breath-tag">During/after · Extended Exhale</span></div>`;
+    return `<div class="breath-companion"><button class="breath-tag" data-breath-id="extended">During/after · Extended Exhale</button></div>`;
   }
   if(session.kind==="breath"){
-    return `<div class="breath-companion"><span class="breath-tag">Complete on Breathe tab</span></div>`;
+    return `<div class="breath-companion"><button class="breath-tag" data-breath-id="co2">Complete on Breathe tab</button></div>`;
   }
   return "";
 }
@@ -371,7 +374,20 @@ function renderTrainingPlan(){
       }).join("")}
     </article>`;
   }).join("");
-  $$(".breath-tag").forEach(tag=>tag.addEventListener("click",()=>navigate("breathe")));
+  $$(".breath-tag").forEach(tag=>tag.addEventListener("click",()=>{
+    const protocolId=tag.dataset.breathId;
+    if(protocolId && protocols.some(p=>p.id===protocolId)){
+      state.selectedProtocol=protocolId;
+      saveState();
+    }
+    navigate("breathe");
+    requestAnimationFrame(()=>{
+      setBreathPlayer(selectedProtocol());
+      renderProtocols();
+      const card=document.querySelector(`[data-protocol="${state.selectedProtocol}"]`);
+      if(card) card.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+    });
+  }));
   $$("[data-complete]").forEach(btn=>btn.addEventListener("click",()=>{
     const key=btn.dataset.complete; state.planCompletions[key]=!state.planCompletions[key];
     saveState(); renderTrainingPlan(); renderToday();
@@ -380,14 +396,46 @@ function renderTrainingPlan(){
 
 function selectedProtocol(){ return protocols.find(p=>p.id===state.selectedProtocol)||protocols[0]; }
 function renderProtocols(){
-  $("#protocolCards").innerHTML=protocols.map(p=>`<button class="protocol-card ${p.id===state.selectedProtocol?"active":""}" data-protocol="${p.id}">
-    <strong>${p.name}</strong><span>${p.category} · ${p.minutes} min<br>${p.desc}</span>
+  const currentIndex=Math.max(0,protocols.findIndex(p=>p.id===state.selectedProtocol));
+  $("#protocolCounter").textContent=`${currentIndex+1} / ${protocols.length}`;
+  $("#protocolCards").innerHTML=protocols.map((p,i)=>`<button class="protocol-card ${p.id===state.selectedProtocol?"active":""}" data-protocol="${p.id}" data-index="${i}">
+    <div><p class="eyebrow">${p.category}</p><strong>${p.name}</strong></div>
+    <span>${p.minutes} min · ${p.desc}</span>
   </button>`).join("");
   $$("[data-protocol]").forEach(b=>b.addEventListener("click",()=>{
     if(breathRuntime.running) stopBreath(false);
-    state.selectedProtocol=b.dataset.protocol; saveState(); setBreathPlayer(selectedProtocol()); renderProtocols();
+    state.selectedProtocol=b.dataset.protocol;
+    saveState();
+    setBreathPlayer(selectedProtocol());
+    renderProtocols();
+    requestAnimationFrame(()=>b.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}));
   }));
   setBreathPlayer(selectedProtocol(), false);
+  const carousel=$("#protocolCards");
+  let scrollTimer=null;
+  carousel.onscroll=()=>{
+    clearTimeout(scrollTimer);
+    scrollTimer=setTimeout(()=>{
+      const cards=[...carousel.querySelectorAll(".protocol-card")];
+      if(!cards.length)return;
+      const center=carousel.scrollLeft+carousel.clientWidth/2;
+      let nearest=cards[0],best=Infinity;
+      cards.forEach(card=>{
+        const cardCenter=card.offsetLeft+card.offsetWidth/2;
+        const dist=Math.abs(cardCenter-center);
+        if(dist<best){best=dist;nearest=card;}
+      });
+      const id=nearest.dataset.protocol;
+      if(id && id!==state.selectedProtocol){
+        if(breathRuntime.running) stopBreath(false);
+        state.selectedProtocol=id;
+        saveState();
+        setBreathPlayer(selectedProtocol());
+        cards.forEach(card=>card.classList.toggle("active",card===nearest));
+        $("#protocolCounter").textContent=`${Number(nearest.dataset.index)+1} / ${protocols.length}`;
+      }
+    },100);
+  };
 }
 function setBreathPlayer(p, reset=true){
   $("#breathCategory").textContent=p.category;
@@ -401,7 +449,7 @@ function setBreathPlayer(p, reset=true){
     $("#breathPatternSummary").textContent=`${p.inhale}s in · ${p.exhale}s out${p.hold?` · ${p.hold}s pause`:""}`;
     $("#breathProgress").style.width="0%";
     $("#breathOrb").style.transition="transform .3s ease";
-    $("#breathOrb").style.transform="scale(.64)";
+    $("#breathOrb").style.transform="scale(.90)";
   }
 }
 $("#breathStart").addEventListener("click",()=>breathRuntime.running?stopBreath(false):startBreath());
@@ -674,9 +722,20 @@ $("#resetData").addEventListener("click",()=>{
 
 window.addEventListener("beforeunload",()=>{ if(breathRuntime.running) stopBreath(false); });
 
+
+async function tryLockPortrait(){
+  try{
+    if(screen.orientation?.lock){
+      await screen.orientation.lock("portrait");
+    }
+  }catch(_){}
+}
+window.addEventListener("orientationchange",()=>{ if(window.matchMedia("(orientation:portrait)").matches) tryLockPortrait(); });
+
 breathRuntime.audio=state.settings.sound!==false;
 breathRuntime.haptics=state.settings.haptics!==false;
 renderAll();
+tryLockPortrait();
 if(!state.profile.age && !state.profile.name) setTimeout(openProfile,350);
 
 })();
