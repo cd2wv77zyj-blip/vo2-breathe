@@ -87,3 +87,81 @@ input,select{width:100%;margin-top:6px;padding:12px 11px;border:1px solid var(--
 .bar-chart-icon i:nth-child(1){height:7px}
 .bar-chart-icon i:nth-child(2){height:13px}
 .bar-chart-icon i:nth-child(3){height:18px}
+
+/* v5: Settings, training load, and Wave Circle breathing UI */
+.settings-button{font-size:18px;display:grid;place-items:center}
+.gear-icon{line-height:1;color:var(--accent)}
+
+.training-load-card{overflow:hidden}
+.load-total{font-size:30px;letter-spacing:-1px}
+.load-breakdown{display:grid;gap:10px;margin:16px 0}
+.load-breakdown>div{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px}
+.load-breakdown small{display:block;color:var(--muted);font-size:10px}
+.load-breakdown strong{display:block;font-size:18px;margin-top:2px}
+.load-breakdown>div>span:last-child{font-size:11px;color:var(--muted);font-weight:800}
+.load-dot{width:9px;height:9px;border-radius:50%}
+.workout-dot{background:var(--accent)}
+.breath-dot{background:#69c99a}
+.load-meter{height:8px;background:var(--card2);border-radius:999px;overflow:hidden}
+.load-meter>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#69c99a);border-radius:999px}
+
+.player-controls.single{display:block}
+.live-sensor-preview.two{grid-template-columns:1fr 1fr}
+.live-sensor-preview.two>div:last-child{grid-column:auto}
+
+.wave-circle{
+  background:transparent!important;
+  border:none!important;
+  width:230px!important;
+  height:230px!important;
+  position:absolute;
+  transform:scale(.9)!important;
+}
+.wave-ring{
+  position:absolute;
+  inset:14px;
+  border:1.8px solid color-mix(in srgb,var(--accent) 82%,#fff);
+  border-radius:45% 55% 52% 48% / 48% 43% 57% 52%;
+  opacity:.9;
+}
+.wave-ring-a{transform:rotate(0deg) scale(1)}
+.wave-ring-b{transform:rotate(24deg) scale(.96)}
+.wave-ring-c{transform:rotate(52deg) scale(1.03)}
+.wave-ring-d{transform:rotate(78deg) scale(.92)}
+.breath-phase-label{font-size:17px!important;font-weight:600!important;color:var(--text)}
+.breath-phase-number{font-size:68px!important;line-height:.95!important;letter-spacing:-3px!important}
+.breath-phase-unit{font-size:13px!important;color:var(--muted)}
+.breath-pattern-summary{text-align:center;color:var(--muted);font-size:12px;margin:-8px 0 8px}
+.orb-copy{gap:7px!important}
+
+.settings-section{margin:18px 0}
+.settings-section-title{font-size:10px;letter-spacing:1.3px;color:var(--muted);font-weight:850;margin:0 0 7px}
+.settings-row-card{background:var(--card);border:1px solid var(--line);border-radius:17px;overflow:hidden}
+.settings-row{min-height:58px;display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.settings-row:first-child{border-top:0}
+.settings-row strong{display:block;font-size:13px}
+.settings-row small{display:block;color:var(--muted);font-size:10px;line-height:1.3;margin-top:2px}
+.settings-symbol{font-size:16px;color:var(--accent);text-align:center}
+.settings-chevron{font-size:24px;color:var(--muted)}
+.settings-action{border:0;background:none;color:var(--accent);font-size:11px;font-weight:800}
+.toggle-row{position:relative;cursor:pointer}
+.toggle-row input{position:absolute;opacity:0;pointer-events:none}
+.toggle-ui{width:42px;height:24px;border-radius:999px;background:var(--card2);border:1px solid var(--line);position:relative;transition:.2s}
+.toggle-ui::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.2s}
+.toggle-row input:checked + .toggle-ui{background:var(--accent)}
+.toggle-row input:checked + .toggle-ui::after{left:20px;background:var(--bg)}
+
+.breath-companion{
+  margin-top:7px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.breath-companion .breath-tag{
+  background:var(--accent2);
+  color:var(--accent);
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:9px;
+  font-weight:800;
+}

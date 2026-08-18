@@ -6,7 +6,7 @@ const KEY = "vo2BreatheV2";
 const LEGACY_VO2 = "vo2";
 
 const defaults = {
-  version: 4,
+  version: 5,
   health: {
     connected: false,
     latestVo2: null,
@@ -14,6 +14,12 @@ const defaults = {
     latestRestingHR: null,
     latestHRV: null,
     workoutImportCount: 0
+  },
+  settings: {
+    sound: true,
+    haptics: true,
+    breathingReminders: false,
+    notifications: false
   },
   profile: {
     name: "", age: "", sex: "", weightLb: "", restingHR: "",
@@ -39,7 +45,7 @@ let state = loadState();
 let breathRuntime = {
   running:false, protocol:null, startedAt:0, durationMs:0,
   phaseIndex:0, phaseStartedAt:0, phaseDuration:0, timer:null,
-  audio:true, audioContext:null, wakeLock:null
+  audio:true, haptics:true, audioContext:null, wakeLock:null
 };
 
 function $(s){ return document.querySelector(s); }
@@ -54,12 +60,13 @@ function validNumber(v,min,max){ const n=Number(v); return Number.isFinite(n)&&n
 function loadState(){
   try{
     const parsed = JSON.parse(localStorage.getItem(KEY) || "null");
-    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4)) {
+    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4 || parsed.version === 5)) {
       return {
         ...defaults,
         ...parsed,
-        version: 4,
+        version: 5,
         health: {...defaults.health, ...(parsed.health || {})},
+        settings: {...defaults.settings, ...(parsed.settings || {})},
         profile:{...defaults.profile,...parsed.profile}
       };
     }
@@ -126,6 +133,7 @@ function renderAll(){
   renderHeader();
   renderHealthStatus();
   renderToday();
+  renderTrainingLoad();
   renderPlanControls();
   renderTrainingPlan();
   renderProtocols();
@@ -166,6 +174,40 @@ function explainHealthConnection(){
 function renderHeader(){
   $("#headerSubtitle").textContent = state.profile.name ? `${state.profile.name}'s aerobic performance` : "Aerobic performance";
 }
+
+function workoutLoad(workout){
+  const duration=Number(workout.duration||0);
+  const rpe=Number(workout.rpe||5);
+  return Math.max(0,Math.round(duration*rpe*.55));
+}
+function breathLoad(session){
+  const min=Number(session.minutes||0);
+  const p=protocols.find(x=>x.id===session.protocolId);
+  const factor=p?.category==="Tolerance"?7:p?.category==="Warm-up"?4:5;
+  return Math.max(0,Math.round(min*factor));
+}
+function weeklyTrainingLoad(){
+  const workouts=state.workouts.filter(x=>new Date(x.date).getTime()>=daysAgo(7));
+  const breaths=state.breathSessions.filter(x=>new Date(x.date).getTime()>=daysAgo(7));
+  const workout=workouts.reduce((sum,x)=>sum+workoutLoad(x),0);
+  const breath=breaths.reduce((sum,x)=>sum+breathLoad(x),0);
+  return {workout,breath,total:workout+breath};
+}
+function renderTrainingLoad(){
+  const load=weeklyTrainingLoad();
+  const total=Math.max(1,load.total);
+  $("#weeklyLoadTotal").textContent=load.total;
+  $("#weeklyWorkoutLoad").textContent=load.workout;
+  $("#weeklyBreathLoad").textContent=load.breath;
+  $("#weeklyWorkoutPct").textContent=`${Math.round(load.workout/total*100)}%`;
+  $("#weeklyBreathPct").textContent=`${Math.round(load.breath/total*100)}%`;
+  const targetLow=150,targetHigh=500;
+  $("#weeklyLoadMeter").style.width=`${clamp(load.total/targetHigh*100,0,100)}%`;
+  $("#weeklyLoadStatus").textContent=
+    load.total<targetLow?"Building your week":
+    load.total<=targetHigh?"You’re on track":"High load — prioritize recovery";
+}
+
 function renderToday(){
   const latest=latestVo2();
   $("#todayGreeting").textContent = state.profile.name ? `Hi ${state.profile.name}. Keep the next useful step simple.` : "Your training, breathing, and progress in one place.";
@@ -296,6 +338,23 @@ function generatePlan(){
     };
   });
 }
+
+function renderBreathCompanion(session){
+  if(session.kind==="hard"){
+    return `<div class="breath-companion"><span class="breath-tag">Pre · 3 min Primer</span><span class="breath-tag">Post · 6 min Recovery</span></div>`;
+  }
+  if(session.kind==="aerobic"){
+    return `<div class="breath-companion"><span class="breath-tag">Post · 5.5 Recovery</span></div>`;
+  }
+  if(session.kind==="recovery"){
+    return `<div class="breath-companion"><span class="breath-tag">During/after · Extended Exhale</span></div>`;
+  }
+  if(session.kind==="breath"){
+    return `<div class="breath-companion"><span class="breath-tag">Complete on Breathe tab</span></div>`;
+  }
+  return "";
+}
+
 function renderTrainingPlan(){
   const plan=generatePlan();
   $("#trainingPlan").innerHTML=plan.map(w=>{
@@ -306,12 +365,13 @@ function renderTrainingPlan(){
         const key=`w${w.week}s${i}`, completed=!!state.planCompletions[key];
         return `<div class="training-session">
           <div class="day-pill">${s.day}</div>
-          <div class="session-copy"><strong>${s.type}</strong><small>${s.detail}</small></div>
+          <div class="session-copy"><strong>${s.type}</strong><small>${s.detail}</small>${renderBreathCompanion(s)}</div>
           <button class="complete-button ${completed?"done":""}" data-complete="${key}" aria-label="Mark ${s.type} complete">${completed?"✓":"○"}</button>
         </div>`;
       }).join("")}
     </article>`;
   }).join("");
+  $$(".breath-tag").forEach(tag=>tag.addEventListener("click",()=>navigate("breathe")));
   $$("[data-complete]").forEach(btn=>btn.addEventListener("click",()=>{
     const key=btn.dataset.complete; state.planCompletions[key]=!state.planCompletions[key];
     saveState(); renderTrainingPlan(); renderToday();
@@ -336,18 +396,14 @@ function setBreathPlayer(p, reset=true){
   if(!breathRuntime.running){
     $("#breathRemaining").textContent=formatTimer(p.minutes*60);
     $("#breathPhase").textContent="Ready";
-    $("#breathPhaseTimer").textContent=`${p.inhale}s in / ${p.exhale}s out${p.hold?` / ${p.hold}s pause`:""}`;
+    $("#breathPhaseTimer").textContent=Math.round(p.inhale);
+    $("#breathPhaseUnit").textContent="seconds";
+    $("#breathPatternSummary").textContent=`${p.inhale}s in · ${p.exhale}s out${p.hold?` · ${p.hold}s pause`:""}`;
     $("#breathProgress").style.width="0%";
     $("#breathOrb").style.transition="transform .3s ease";
     $("#breathOrb").style.transform="scale(.64)";
   }
 }
-$("#audioToggle").addEventListener("click",()=>{
-  breathRuntime.audio=!breathRuntime.audio;
-  $("#audioToggle").classList.toggle("active",breathRuntime.audio);
-  $("#audioToggle").setAttribute("aria-pressed",String(breathRuntime.audio));
-  $("#audioToggle").textContent=breathRuntime.audio?"🔊 Audio":"🔇 Audio";
-});
 $("#breathStart").addEventListener("click",()=>breathRuntime.running?stopBreath(false):startBreath());
 
 async function getAudioContext(){
@@ -385,8 +441,7 @@ async function tone(freq=520,duration=.16){
   }catch(_){}
 }
 function tryWebHaptic(){
-  // iOS Safari/PWA currently does not expose reliable vibration/haptic feedback.
-  // This feature-detects other browsers and becomes a native haptic in the iOS build.
+  if(!breathRuntime.haptics) return;
   try{
     if("vibrate" in navigator) navigator.vibrate(35);
   }catch(_){}
@@ -397,14 +452,14 @@ async function acquireWakeLock(){
 async function startBreath(){
   const p=selectedProtocol();
   breathRuntime.running=true; breathRuntime.protocol=p;
+  breathRuntime.audio=state.settings.sound!==false;
+  breathRuntime.haptics=state.settings.haptics!==false;
   $("#watchHr").textContent=state.health?.connected?"Live":"—";
   $("#watchHrv").textContent=state.health?.connected?"After":"—";
   breathRuntime.startedAt=performance.now(); breathRuntime.durationMs=p.minutes*60000;
   breathRuntime.phaseIndex=0;
   $("#breathStart").textContent="Pause session";
   await unlockAudio();
-  $("#cueStatus").textContent=breathRuntime.audio?"Audio":"Visual";
-  $("#hapticStatus").textContent=("vibrate" in navigator)?"Haptic supported":"Native haptics later";
   acquireWakeLock();
   beginPhase();
   breathRuntime.timer=setInterval(updateBreath,100);
@@ -421,7 +476,8 @@ function beginPhase(){
   const seq=phaseSequence(breathRuntime.protocol), phase=seq[breathRuntime.phaseIndex%seq.length];
   breathRuntime.phaseStartedAt=performance.now(); breathRuntime.phaseDuration=phase.sec*1000;
   $("#breathPhase").textContent=phase.name;
-  $("#breathPhaseTimer").textContent=`${phase.sec.toFixed(phase.sec%1?1:0)} sec`;
+  $("#breathPhaseTimer").textContent=Math.ceil(phase.sec);
+  $("#breathPhaseUnit").textContent="seconds";
   const orb=$("#breathOrb");
   orb.style.transition=`transform ${phase.sec}s linear`;
   requestAnimationFrame(()=>orb.style.transform=`scale(${phase.scale})`);
@@ -435,7 +491,7 @@ function updateBreath(){
   $("#breathRemaining").textContent=formatTimer(remain);
   $("#breathProgress").style.width=`${clamp(elapsed/breathRuntime.durationMs*100,0,100)}%`;
   const phaseRemain=Math.max(0,(breathRuntime.phaseDuration-(now-breathRuntime.phaseStartedAt))/1000);
-  $("#breathPhaseTimer").textContent=`${phaseRemain.toFixed(1)} sec`;
+  $("#breathPhaseTimer").textContent=Math.max(0,Math.ceil(phaseRemain));
   if(now-breathRuntime.phaseStartedAt>=breathRuntime.phaseDuration){
     breathRuntime.phaseIndex++; beginPhase();
   }
@@ -466,7 +522,7 @@ function finishBreath(){
 function saveBreathSession(elapsed){
   const p=breathRuntime.protocol || selectedProtocol();
   state.breathSessions.push({id:cryptoId(),date:nowISO(),protocolId:p.id,protocol:p.name,minutes:round1(elapsed/60000)});
-  saveState(); renderBreathStats(); renderToday(); renderProgress();
+  saveState(); renderBreathStats(); renderToday(); renderTrainingLoad(); renderProgress();
 }
 function renderBreathStats(){
   const recent=state.breathSessions.filter(x=>new Date(x.date).getTime()>=daysAgo(7));
@@ -512,7 +568,7 @@ $("#saveWorkout").addEventListener("click",()=>{
   saveState();
   $("#workoutMessage").textContent="Workout saved.";
   ["#workoutDuration","#workoutDistance","#workoutHr","#workoutRpe"].forEach(s=>$(s).value="");
-  renderToday(); renderProgress(); showToast("Workout saved");
+  renderToday(); renderTrainingLoad(); renderProgress(); showToast("Workout saved");
 });
 function estimateRunVO2(totalMinutes){
   if(!Number.isFinite(totalMinutes)||totalMinutes<6||totalMinutes>60) throw new Error("Enter a realistic 1.5-mile time.");
@@ -575,6 +631,10 @@ function openProfile(){
   $("#profileWeeks").value=String(state.profile.planWeeks||4);
   $("#profileGoal").value=state.profile.vo2Goal||"";
   $("#profileMessage").textContent="";
+  $("#settingsSound").checked=state.settings.sound!==false;
+  $("#settingsHaptics").checked=state.settings.haptics!==false;
+  $("#settingsBreathReminders").checked=!!state.settings.breathingReminders;
+  $("#settingsNotifications").checked=!!state.settings.notifications;
   $("#modalBackdrop").hidden=false;
 }
 function closeProfile(){ $("#modalBackdrop").hidden=true; }
@@ -596,7 +656,15 @@ $("#saveProfile").addEventListener("click",()=>{
     planWeeks:Number($("#profileWeeks").value),
     vo2Goal:goal
   };
-  saveState(); closeProfile(); renderAll(); showToast("Profile saved");
+  state.settings={
+    sound:$("#settingsSound").checked,
+    haptics:$("#settingsHaptics").checked,
+    breathingReminders:$("#settingsBreathReminders").checked,
+    notifications:$("#settingsNotifications").checked
+  };
+  breathRuntime.audio=state.settings.sound;
+  breathRuntime.haptics=state.settings.haptics;
+  saveState(); closeProfile(); renderAll(); showToast("Settings saved");
 });
 $("#resetData").addEventListener("click",()=>{
   if(!confirm("Reset all locally stored VO₂, workout, breathing, and profile data?"))return;
@@ -606,6 +674,8 @@ $("#resetData").addEventListener("click",()=>{
 
 window.addEventListener("beforeunload",()=>{ if(breathRuntime.running) stopBreath(false); });
 
+breathRuntime.audio=state.settings.sound!==false;
+breathRuntime.haptics=state.settings.haptics!==false;
 renderAll();
 if(!state.profile.age && !state.profile.name) setTimeout(openProfile,350);
 

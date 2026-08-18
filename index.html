@@ -24,7 +24,7 @@
         <span id="headerSubtitle">Aerobic performance</span>
       </div>
     </div>
-    <button id="profileButton" class="icon-button" aria-label="Profile and settings">●</button>
+    <button id="profileButton" class="icon-button settings-button" aria-label="Settings"><span class="gear-icon" aria-hidden="true">⚙︎</span></button>
   </header>
 
   <main class="app-shell">
@@ -82,6 +82,30 @@
           <small>sessions / 7d</small>
         </article>
       </div>
+
+      <article class="card training-load-card">
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">TRAINING LOAD · THIS WEEK</p>
+            <h2>Workouts + breathwork</h2>
+          </div>
+          <strong id="weeklyLoadTotal" class="load-total">0</strong>
+        </div>
+        <div class="load-breakdown">
+          <div>
+            <span class="load-dot workout-dot"></span>
+            <div><small>Workouts</small><strong id="weeklyWorkoutLoad">0</strong></div>
+            <span id="weeklyWorkoutPct">0%</span>
+          </div>
+          <div>
+            <span class="load-dot breath-dot"></span>
+            <div><small>Breathwork</small><strong id="weeklyBreathLoad">0</strong></div>
+            <span id="weeklyBreathPct">0%</span>
+          </div>
+        </div>
+        <div class="load-meter"><div id="weeklyLoadMeter"></div></div>
+        <p id="weeklyLoadStatus" class="small-copy">Complete sessions to build your weekly load.</p>
+      </article>
 
       <article class="card">
         <div class="card-heading-row">
@@ -172,24 +196,29 @@
         </div>
 
         <div class="orb-stage">
-          <div id="breathOrb" class="breath-orb"></div>
+          <div id="breathOrb" class="breath-orb wave-circle">
+            <span class="wave-ring wave-ring-a"></span>
+            <span class="wave-ring wave-ring-b"></span>
+            <span class="wave-ring wave-ring-c"></span>
+            <span class="wave-ring wave-ring-d"></span>
+          </div>
           <div class="orb-copy">
-            <strong id="breathPhase">Ready</strong>
-            <span id="breathPhaseTimer">5.5 in / 5.5 out</span>
+            <span id="breathPhase" class="breath-phase-label">Ready</span>
+            <strong id="breathPhaseTimer" class="breath-phase-number">4</strong>
+            <span id="breathPhaseUnit" class="breath-phase-unit">seconds</span>
           </div>
         </div>
+        <div id="breathPatternSummary" class="breath-pattern-summary">4 in · 6 out · 2 pause</div>
 
         <div class="session-progress"><div id="breathProgress" class="session-progress-fill"></div></div>
 
-        <div class="player-controls">
-          <button id="audioToggle" class="chip active" aria-pressed="true">🔊 Audio</button>
+        <div class="player-controls single">
           <button id="breathStart" class="primary-button">Start session</button>
         </div>
 
-        <div class="live-sensor-preview">
+        <div class="live-sensor-preview two">
           <div><span>Apple Watch HR</span><strong id="watchHr">—</strong><small>bpm</small></div>
           <div><span>Post-session HRV</span><strong id="watchHrv">—</strong><small>ms</small></div>
-          <div><span>Breathing cue</span><strong id="cueStatus">Audio</strong><small id="hapticStatus">Native haptics later</small></div>
         </div>
 
         <p id="breathInstruction" class="small-copy">Breathe gently. Do not force unusually large breaths.</p>
@@ -354,18 +383,58 @@
 <div id="modalBackdrop" class="modal-backdrop" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
     <button id="closeProfile" class="modal-close" aria-label="Close">×</button>
-    <p class="eyebrow">PROFILE</p>
-    <h2 id="profileTitle">Personalize your plan</h2>
+    <p class="eyebrow">SETTINGS</p>
+    <h2 id="profileTitle">Settings</h2>
     <p class="muted-copy">Stored only on this device in this development build.</p>
 
-    <article class="profile-health-card">
-      <div>
-        <p class="eyebrow">PREFERRED DATA SOURCE</p>
-        <h3>Apple Health</h3>
-        <p id="profileHealthCopy" class="small-copy">Connect once in the native iOS app and we’ll use HealthKit data before asking you to enter the same information manually.</p>
-      </div>
-      <button id="profileHealthButton" class="secondary-button">Connect Apple Health</button>
-    </article>
+    <section class="settings-section">
+      <p class="settings-section-title">ACCOUNT & HEALTH</p>
+      <article class="settings-row-card">
+        <div class="settings-row">
+          <span class="settings-symbol">♥</span>
+          <div><strong>Apple Health</strong><small id="profileHealthCopy">Preferred source for VO₂ max, workouts, heart rate, and recovery data</small></div>
+          <button id="profileHealthButton" class="settings-action">Connect</button>
+        </div>
+        <div class="settings-row">
+          <span class="settings-symbol">◫</span>
+          <div><strong>Plan preferences</strong><small>Goal, days/week, duration, intensity</small></div>
+          <span class="settings-chevron">›</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="settings-section">
+      <p class="settings-section-title">EXPERIENCE</p>
+      <article class="settings-row-card">
+        <label class="settings-row toggle-row">
+          <span class="settings-symbol">◖</span>
+          <div><strong>Sound</strong><small>Breathing phase tones</small></div>
+          <input id="settingsSound" type="checkbox">
+          <span class="toggle-ui"></span>
+        </label>
+        <label class="settings-row toggle-row">
+          <span class="settings-symbol">◫</span>
+          <div><strong>Haptics</strong><small>Phase transition taps where supported</small></div>
+          <input id="settingsHaptics" type="checkbox">
+          <span class="toggle-ui"></span>
+        </label>
+        <label class="settings-row toggle-row">
+          <span class="settings-symbol">◷</span>
+          <div><strong>Breathing reminders</strong><small>Daily breathwork prompts</small></div>
+          <input id="settingsBreathReminders" type="checkbox">
+          <span class="toggle-ui"></span>
+        </label>
+        <label class="settings-row toggle-row">
+          <span class="settings-symbol">♢</span>
+          <div><strong>Notifications</strong><small>Training and recovery reminders</small></div>
+          <input id="settingsNotifications" type="checkbox">
+          <span class="toggle-ui"></span>
+        </label>
+      </article>
+    </section>
+
+    <section class="settings-section">
+      <p class="settings-section-title">PLAN</p>
     <div class="form-grid two">
       <label>Name
         <input id="profileName" autocomplete="given-name" placeholder="Your name">
@@ -414,7 +483,23 @@
         <input id="profileGoal" type="number" inputmode="decimal" min="15" max="90" step="0.1" placeholder="50">
       </label>
     </div>
-    <button id="saveProfile" class="primary-button">Save profile</button>
+    </section>
+    <button id="saveProfile" class="primary-button">Save settings</button>
+    <section class="settings-section">
+      <p class="settings-section-title">DATA & SUPPORT</p>
+      <article class="settings-row-card">
+        <div class="settings-row">
+          <span class="settings-symbol">⇧</span>
+          <div><strong>Export data</strong><small>Coming in a later build</small></div>
+          <span class="settings-chevron">›</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-symbol">?</span>
+          <div><strong>Support & feedback</strong><small>Share ideas and report issues</small></div>
+          <span class="settings-chevron">›</span>
+        </div>
+      </article>
+    </section>
     <button id="resetData" class="danger-button">Reset all local data</button>
     <div id="profileMessage" class="form-message"></div>
   </section>
