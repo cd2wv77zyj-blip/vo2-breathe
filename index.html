@@ -18,7 +18,7 @@
 <div id="app">
   <header class="topbar">
     <div>
-      <div class="brand-mark">VO₂</div>
+      <div class="brand-mark"><img src="./icon-192.png" alt=""></div>
       <div class="brand-copy">
         <strong>VO₂ Breathe</strong>
         <span id="headerSubtitle">Aerobic performance</span>
@@ -132,6 +132,15 @@
               <option value="4">4 days</option>
               <option value="5">5 days</option>
               <option value="6">6 days</option>
+            </select>
+          </label>
+          <label>Plan length
+            <select id="planWeeks">
+              <option value="4">4 weeks</option>
+              <option value="5">5 weeks</option>
+              <option value="6">6 weeks</option>
+              <option value="7">7 weeks</option>
+              <option value="8">8 weeks</option>
             </select>
           </label>
         </div>
@@ -338,7 +347,7 @@
     <button data-tab="train"><span>↗</span><small>Train</small></button>
     <button data-tab="breathe"><span>◉</span><small>Breathe</small></button>
     <button data-tab="log"><span>＋</span><small>Log</small></button>
-    <button data-tab="progress"><span>⌁</span><small>Progress</small></button>
+    <button data-tab="progress"><span class="bar-chart-icon" aria-hidden="true"><i></i><i></i><i></i></span><small>Progress</small></button>
   </nav>
 </div>
 
@@ -390,6 +399,15 @@
           <option value="4">4 days</option>
           <option value="5">5 days</option>
           <option value="6">6 days</option>
+        </select>
+      </label>
+      <label>Plan length
+        <select id="profileWeeks">
+          <option value="4">4 weeks</option>
+          <option value="5">5 weeks</option>
+          <option value="6">6 weeks</option>
+          <option value="7">7 weeks</option>
+          <option value="8">8 weeks</option>
         </select>
       </label>
       <label>VO₂ goal

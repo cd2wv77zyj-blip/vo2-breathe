@@ -6,7 +6,7 @@ const KEY = "vo2BreatheV2";
 const LEGACY_VO2 = "vo2";
 
 const defaults = {
-  version: 3,
+  version: 4,
   health: {
     connected: false,
     latestVo2: null,
@@ -17,7 +17,7 @@ const defaults = {
   },
   profile: {
     name: "", age: "", sex: "", weightLb: "", restingHR: "",
-    level: "intermediate", daysPerWeek: 4, vo2Goal: ""
+    level: "intermediate", daysPerWeek: 4, planWeeks: 4, vo2Goal: ""
   },
   vo2: [],
   workouts: [],
@@ -54,11 +54,11 @@ function validNumber(v,min,max){ const n=Number(v); return Number.isFinite(n)&&n
 function loadState(){
   try{
     const parsed = JSON.parse(localStorage.getItem(KEY) || "null");
-    if(parsed && (parsed.version === 2 || parsed.version === 3)) {
+    if(parsed && (parsed.version === 2 || parsed.version === 3 || parsed.version === 4)) {
       return {
         ...defaults,
         ...parsed,
-        version: 3,
+        version: 4,
         health: {...defaults.health, ...(parsed.health || {})},
         profile:{...defaults.profile,...parsed.profile}
       };
@@ -231,10 +231,12 @@ function renderChart(container, points){
 function renderPlanControls(){
   $("#planLevel").value=state.profile.level || "intermediate";
   $("#planDays").value=String(state.profile.daysPerWeek || 4);
+  $("#planWeeks").value=String(state.profile.planWeeks || 4);
 }
 $("#regeneratePlan").addEventListener("click",()=>{
   state.profile.level=$("#planLevel").value;
   state.profile.daysPerWeek=Number($("#planDays").value);
+  state.profile.planWeeks=Number($("#planWeeks").value);
   state.planCompletions={};
   saveState(); renderAll(); showToast("Plan regenerated");
 });
@@ -250,26 +252,48 @@ function adaptiveMode(){
 function generatePlan(){
   const level=state.profile.level || "intermediate";
   const days=Number(state.profile.daysPerWeek || 4);
+  const weeks=clamp(Number(state.profile.planWeeks || 4),4,8);
   const mode=adaptiveMode();
   const zoneBase=level==="beginner"?25:level==="intermediate"?35:45;
   const intervalBase=level==="beginner"?4:level==="intermediate"?5:6;
 
-  return [1,2,3,4].map(week=>{
-    const deload=week===4;
-    const progress=(week-1)+(mode==="progress"?1:0);
-    const z=zoneBase+(deload?5:progress*5);
-    const reps=deload?intervalBase:intervalBase+Math.min(progress,2);
+  return Array.from({length:weeks},(_,idx)=>{
+    const week=idx+1;
+    const midReset=weeks>=7 && week===4;
+    const finalConsolidation=week===weeks;
+    const recoveryWeek=midReset || finalConsolidation;
+
+    let buildIndex=week-1+(mode==="progress"?1:0);
+    if(weeks>=7 && week>4) buildIndex-=1;
+
+    const z=zoneBase+(recoveryWeek?5:Math.min(buildIndex,4)*5);
+    const reps=recoveryWeek ? intervalBase : intervalBase+Math.min(Math.max(buildIndex,0),2);
+
     let sessions=[
       {type:"Zone 2",detail:`${z} min conversational aerobic work`,kind:"aerobic"},
       {type:"Intervals",detail:`${reps} × 3 min hard / 3 min easy; controlled, not maximal`,kind:"hard"},
       {type:"Zone 2",detail:`${z+10} min easy-moderate endurance`,kind:"aerobic"},
-      {type:"Breath",detail:`${deload?6:8} min breathing control or recovery`,kind:"breath"},
+      {type:"Breath",detail:`${recoveryWeek?6:8} min breathing control or recovery`,kind:"breath"},
       {type:"Recovery",detail:"20–30 min easy movement + recovery breathing",kind:"recovery"},
       {type:"Optional",detail:"Easy aerobic volume only if well recovered",kind:"optional"}
     ];
+
+    if(recoveryWeek){
+      sessions=sessions.map(s=>{
+        if(s.type==="Intervals") return {...s,detail:`${Math.max(3,reps-1)} × 2 min controlled hard / 3 min easy; lower-volume consolidation`};
+        if(s.type==="Zone 2") return {...s,detail:s.detail.replace(/\d+ min/,`${Math.max(20,z-5)} min`)};
+        return s;
+      });
+    }
+
     sessions=sessions.slice(0,days);
     const names=["Mon","Tue","Wed","Thu","Fri","Sat"];
-    return {week,deload,sessions:sessions.map((s,i)=>({...s,day:names[i]}))};
+    return {
+      week,
+      deload:recoveryWeek,
+      label:midReset?"RESET":finalConsolidation?"CONSOLIDATE":"BUILD",
+      sessions:sessions.map((s,i)=>({...s,day:names[i]}))
+    };
   });
 }
 function renderTrainingPlan(){
@@ -277,7 +301,7 @@ function renderTrainingPlan(){
   $("#trainingPlan").innerHTML=plan.map(w=>{
     const done=w.sessions.filter((_,i)=>state.planCompletions[`w${w.week}s${i}`]).length;
     return `<article class="week-card">
-      <div class="week-header"><div><p class="eyebrow">${w.deload?"CONSOLIDATE":"BUILD"}</p><h2>Week ${w.week}</h2></div><small>${done}/${w.sessions.length} done</small></div>
+      <div class="week-header"><div><p class="eyebrow">${w.label || (w.deload?"CONSOLIDATE":"BUILD")}</p><h2>Week ${w.week}</h2></div><small>${done}/${w.sessions.length} done</small></div>
       ${w.sessions.map((s,i)=>{
         const key=`w${w.week}s${i}`, completed=!!state.planCompletions[key];
         return `<div class="training-session">
@@ -548,6 +572,7 @@ function openProfile(){
   $("#profileRhr").value=state.profile.restingHR||"";
   $("#profileLevel").value=state.profile.level||"intermediate";
   $("#profileDays").value=String(state.profile.daysPerWeek||4);
+  $("#profileWeeks").value=String(state.profile.planWeeks||4);
   $("#profileGoal").value=state.profile.vo2Goal||"";
   $("#profileMessage").textContent="";
   $("#modalBackdrop").hidden=false;
@@ -566,7 +591,10 @@ $("#saveProfile").addEventListener("click",()=>{
   if(age===null||wt===null||rhr===null||goal===null){$("#profileMessage").textContent="Check the highlighted numeric ranges.";return;}
   state.profile={
     name:$("#profileName").value.trim().slice(0,30),age,sex:$("#profileSex").value,weightLb:wt,restingHR:rhr,
-    level:$("#profileLevel").value,daysPerWeek:Number($("#profileDays").value),vo2Goal:goal
+    level:$("#profileLevel").value,
+    daysPerWeek:Number($("#profileDays").value),
+    planWeeks:Number($("#profileWeeks").value),
+    vo2Goal:goal
   };
   saveState(); closeProfile(); renderAll(); showToast("Profile saved");
 });
