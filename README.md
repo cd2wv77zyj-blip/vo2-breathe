@@ -1,8 +1,12 @@
-# VO₂ Breathe PWA v7.10
+# VO₂ Breathe PWA v7.10.1
 
-Final PWA visual polish:
-- Forest Nebula app icon selected.
-- Larger VO₂ lettering for Home Screen readability.
-- Centered standalone icon with deep forest-space background and restrained Soft Wave glow.
-- New icon filenames force a fresh iOS icon request.
-- Application functionality is unchanged from the working v7.9.2 baseline.
+Icon cleanup release.
+
+- Uses the actual #2 Forest Nebula artwork from the approved concept board.
+- No recreation or reinterpretation of the icon.
+- Only three icon image files remain:
+  - forest-nebula-192.png
+  - forest-nebula-512.png
+  - apple-touch-icon.png
+- Removes all legacy icon PNGs from prior iterations.
+- App logic and UI behavior are unchanged from v7.10.
