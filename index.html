@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="VO₂ Breathe">
   <meta name="description" content="Track VO₂ max, train aerobic fitness, and practice performance-focused breathing.">
-  <meta name="vo2-breathe-build" content="7.4.0">
+  <meta name="vo2-breathe-build" content="7.5.0">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles-v7-4.css?v=7.4.0">
+  <link rel="stylesheet" href="./styles-v7-5.css?v=7.5.0">
   <title>VO₂ Breathe</title>
 </head>
 <body>
@@ -241,7 +241,9 @@
           <button id="breathStart" class="primary-button">Start session</button>
         </div>
 
-        <p id="breathInstruction" class="small-copy breath-guidance">Use a relaxed inhale and a smooth, unforced exhale.</p>
+        <div class="breath-guidance-lane">
+          <p id="breathInstruction" class="small-copy breath-guidance">Use a relaxed inhale and a smooth, unforced exhale.</p>
+        </div>
 
         <div class="live-sensor-preview two mockup-sensors">
           <div><span>Apple Watch HR</span><strong id="watchHr">—</strong><small>bpm</small></div>
@@ -560,7 +562,7 @@
       </div>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./app-v7-4.js?v=7.4.0"></script>
+<script src="./app-v7-5.js?v=7.5.0"></script>
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
