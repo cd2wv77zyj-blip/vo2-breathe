@@ -1,12 +1,6 @@
-# VO₂ Breathe PWA v7.9
+# VO₂ Breathe PWA v7.9.1
 
-Final PWA polish before native feature integration:
-- Replaces the app/Home Screen icon with the minimal Deep Space Soft Wave concept.
-- Keeps all v7.8 Breathe animation, carousel, Today reorder, settings, and onboarding behavior unchanged.
-- Uses new v7.9 asset names/cache so the icon update refreshes cleanly.
-
-Next phase:
-- Native Apple Health / HealthKit integration
-- Notifications
-- Native haptics
-- Apple Watch sensor integration
+Icon-only hotfix:
+- Re-centers the minimal Deep Space artwork.
+- Adds safe-area padding so iOS/PWA icon masking does not crop or visually offset the mark.
+- App functionality is unchanged from v7.9/v7.8.
