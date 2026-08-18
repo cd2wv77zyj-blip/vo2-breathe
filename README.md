@@ -1,35 +1,17 @@
-# VO₂ Breathe — PWA v2
+# VO₂ Breathe — PWA v3
 
-This is the second development build of VO₂ Breathe.
+## New in v3
+- Uses the exact user-selected VO₂ app icon
+- Apple Health connection is prompted from onboarding and Today
+- Data model now treats Apple Health as the preferred future source
+- If Apple Health supplies VO₂ max, the app will not ask for a manual baseline
+- Apple Watch live-session UI is scaffolded for heart rate
+- Post-session HRV display is scaffolded for the native HealthKit build
+- Stronger, explicitly unlocked Web Audio phase cues
+- Inhale haptic feature detection in the PWA; full iPhone/Watch haptics are reserved for the native build
+- Existing v2 local data migrates forward
 
-## New in v2
-- Personal profile / onboarding
-- Persistent VO₂ milestone history
-- Workout logging and history
-- 1.5-mile run and Rockport field-test calculators
-- Adaptive 4-week training plan with completion tracking
-- Five guided breathing protocols
-- Drift-resistant breathing timer and animation
-- Optional Web Audio phase cues
-- Screen Wake Lock where the browser supports it
-- Breathing session history and weekly consistency
-- Optional comfortable-exhale-pause tracking
-- Progress dashboard
-- Offline PWA shell
-- iPhone Home Screen PNG icon
-- Migration of the original prototype's saved VO₂ value when available
+## Platform note
+A PWA cannot request HealthKit authorization. The Connect Apple Health controls in this build preview the native onboarding flow and explain that limitation. The later iOS build will replace the stub with real HealthKit authorization.
 
-## Update your GitHub Pages site
-Replace the files in the root of `vo2-breathe` with the files in this package.
-
-GitHub Pages is already configured, so after the commit the existing site URL should refresh automatically.
-
-If your installed Home Screen copy appears stale, open the site once in Safari, refresh, and then reopen the Home Screen app.
-
-## Data
-This development build stores profile and fitness data in browser localStorage on the device. It does not send health data to a server.
-
-Native Apple Health / HealthKit sync will be part of the later iOS build.
-
-## Health positioning
-Field-test VO₂ results are estimates. Breathing protocols are designed for control/recovery/performance support. The app does not claim breathing exercises alone will increase VO₂ max.
+Apple Watch heart rate can be collected at high frequency during an active native HKWorkoutSession. Respiratory rate and HRV are HealthKit data types, but should not be presented as guaranteed real-time breathing-session measurements. The native app will query available post-session HRV data and show it when present.

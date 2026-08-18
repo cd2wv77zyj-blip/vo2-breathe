@@ -6,7 +6,15 @@ const KEY = "vo2BreatheV2";
 const LEGACY_VO2 = "vo2";
 
 const defaults = {
-  version: 2,
+  version: 3,
+  health: {
+    connected: false,
+    latestVo2: null,
+    latestVo2Date: null,
+    latestRestingHR: null,
+    latestHRV: null,
+    workoutImportCount: 0
+  },
   profile: {
     name: "", age: "", sex: "", weightLb: "", restingHR: "",
     level: "intermediate", daysPerWeek: 4, vo2Goal: ""
@@ -46,7 +54,15 @@ function validNumber(v,min,max){ const n=Number(v); return Number.isFinite(n)&&n
 function loadState(){
   try{
     const parsed = JSON.parse(localStorage.getItem(KEY) || "null");
-    if(parsed && parsed.version === 2) return {...defaults, ...parsed, profile:{...defaults.profile,...parsed.profile}};
+    if(parsed && (parsed.version === 2 || parsed.version === 3)) {
+      return {
+        ...defaults,
+        ...parsed,
+        version: 3,
+        health: {...defaults.health, ...(parsed.health || {})},
+        profile:{...defaults.profile,...parsed.profile}
+      };
+    }
   }catch(_){}
   const next = structuredClone ? structuredClone(defaults) : JSON.parse(JSON.stringify(defaults));
   try{
@@ -83,7 +99,17 @@ function vo2Tier(v){
   if(v>=32) return "Fair";
   return "Developing";
 }
-function latestVo2(){ return [...state.vo2].sort((a,b)=>new Date(b.date)-new Date(a.date))[0] || null; }
+function latestVo2(){
+  if(state.health?.connected && Number.isFinite(Number(state.health.latestVo2))){
+    return {
+      id:"healthkit-latest",
+      date:state.health.latestVo2Date || todayISO(),
+      value:Number(state.health.latestVo2),
+      method:"Apple Health"
+    };
+  }
+  return [...state.vo2].sort((a,b)=>new Date(b.date)-new Date(a.date))[0] || null;
+}
 function sortedVo2(){ return [...state.vo2].sort((a,b)=>new Date(a.date)-new Date(b.date)); }
 
 function navigate(name){
@@ -98,6 +124,7 @@ $$("[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go)
 
 function renderAll(){
   renderHeader();
+  renderHealthStatus();
   renderToday();
   renderPlanControls();
   renderTrainingPlan();
@@ -106,6 +133,36 @@ function renderAll(){
   prefillLogForms();
   renderProgress();
 }
+
+function renderHealthStatus(){
+  const connected=!!state.health?.connected;
+  $("#healthStatusTitle").textContent=connected?"Apple Health connected":"Connect your health data";
+  $("#healthStatusBadge").textContent=connected?"Connected":"Not connected";
+  $("#healthStatusCopy").textContent=connected
+    ? "VO₂ max and available fitness data are being treated as the preferred source before manual entry."
+    : "In the native iPhone build, Apple Health will supply your latest VO₂ max, workouts, resting heart rate, HRV, and other available metrics automatically.";
+  $("#healthConnectButton").textContent=connected?"Health data connected":"Connect Apple Health";
+  $("#healthConnectButton").disabled=connected;
+
+  const profileBtn=$("#profileHealthButton");
+  if(profileBtn){
+    profileBtn.textContent=connected?"Apple Health connected":"Connect Apple Health";
+    profileBtn.disabled=connected;
+  }
+
+  if(connected && state.health.latestRestingHR){
+    $("#restingHrMetric").textContent=state.health.latestRestingHR;
+  }
+}
+
+function explainHealthConnection(){
+  alert(
+    "Apple Health connection is staged for the native iPhone build. " +
+    "A web/PWA cannot request HealthKit permission directly. In the native build, " +
+    "this button will open Apple’s Health authorization sheet and sync your latest VO₂ max, workouts, resting heart rate, and available recovery metrics."
+  );
+}
+
 function renderHeader(){
   $("#headerSubtitle").textContent = state.profile.name ? `${state.profile.name}'s aerobic performance` : "Aerobic performance";
 }
@@ -144,7 +201,12 @@ function chooseNextAction(){
     return {title:"Set up your profile",copy:"Your training frequency and starting level drive the plan.",button:"Set up profile",action:openProfile};
   }
   if(!latestVo2()){
-    return {title:"Establish your VO₂ baseline",copy:"Use a 1.5-mile run or Rockport walk field test.",button:"Log a test",action:()=>navigate("log")};
+    return {
+      title:"Establish your VO₂ baseline",
+      copy:"No VO₂ max is available yet. In the native app we’ll check Apple Health first; field tests are the fallback.",
+      button:"Log a test",
+      action:()=>navigate("log")
+    };
   }
   const today=new Date().getDay();
   const breathRecent=state.breathSessions.some(x=>new Date(x.date).getTime()>=daysAgo(2));
@@ -267,17 +329,43 @@ $("#breathStart").addEventListener("click",()=>breathRuntime.running?stopBreath(
 async function getAudioContext(){
   if(!breathRuntime.audio) return null;
   try{
-    if(!breathRuntime.audioContext) breathRuntime.audioContext=new (window.AudioContext||window.webkitAudioContext)();
-    if(breathRuntime.audioContext.state==="suspended") await breathRuntime.audioContext.resume();
+    if(!breathRuntime.audioContext){
+      breathRuntime.audioContext=new (window.AudioContext||window.webkitAudioContext)();
+    }
+    if(breathRuntime.audioContext.state==="suspended"){
+      await breathRuntime.audioContext.resume();
+    }
     return breathRuntime.audioContext;
   }catch(_){ return null; }
 }
-async function tone(freq=520,duration=.07){
+async function unlockAudio(){
+  const ctx=await getAudioContext();
+  if(!ctx) return;
+  try{
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    gain.gain.value=.0001;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+.025);
+  }catch(_){}
+}
+async function tone(freq=520,duration=.16){
   const ctx=await getAudioContext(); if(!ctx) return;
-  const osc=ctx.createOscillator(), gain=ctx.createGain();
-  osc.frequency.value=freq; gain.gain.setValueAtTime(.055,ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);
-  osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+duration);
+  try{
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type="sine";
+    osc.frequency.setValueAtTime(freq,ctx.currentTime);
+    gain.gain.setValueAtTime(.14,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+duration);
+  }catch(_){}
+}
+function tryWebHaptic(){
+  // iOS Safari/PWA currently does not expose reliable vibration/haptic feedback.
+  // This feature-detects other browsers and becomes a native haptic in the iOS build.
+  try{
+    if("vibrate" in navigator) navigator.vibrate(35);
+  }catch(_){}
 }
 async function acquireWakeLock(){
   try{ if("wakeLock" in navigator) breathRuntime.wakeLock=await navigator.wakeLock.request("screen"); }catch(_){}
@@ -285,10 +373,15 @@ async function acquireWakeLock(){
 async function startBreath(){
   const p=selectedProtocol();
   breathRuntime.running=true; breathRuntime.protocol=p;
+  $("#watchHr").textContent=state.health?.connected?"Live":"—";
+  $("#watchHrv").textContent=state.health?.connected?"After":"—";
   breathRuntime.startedAt=performance.now(); breathRuntime.durationMs=p.minutes*60000;
   breathRuntime.phaseIndex=0;
   $("#breathStart").textContent="Pause session";
-  await getAudioContext(); acquireWakeLock();
+  await unlockAudio();
+  $("#cueStatus").textContent=breathRuntime.audio?"Audio":"Visual";
+  $("#hapticStatus").textContent=("vibrate" in navigator)?"Haptic supported":"Native haptics later";
+  acquireWakeLock();
   beginPhase();
   breathRuntime.timer=setInterval(updateBreath,100);
 }
@@ -309,6 +402,7 @@ function beginPhase(){
   orb.style.transition=`transform ${phase.sec}s linear`;
   requestAnimationFrame(()=>orb.style.transform=`scale(${phase.scale})`);
   tone(phase.tone);
+  if(phase.name==="Inhale") tryWebHaptic();
 }
 function updateBreath(){
   if(!breathRuntime.running) return;
@@ -328,6 +422,8 @@ function stopBreath(save=false){
   const elapsed=breathRuntime.running?(performance.now()-breathRuntime.startedAt):0;
   breathRuntime.running=false;
   $("#breathStart").textContent="Start session";
+  $("#watchHr").textContent="—";
+  $("#watchHrv").textContent=state.health?.latestHRV || "—";
   try{breathRuntime.wakeLock?.release();}catch(_){}
   breathRuntime.wakeLock=null;
   if(save && elapsed>30000) saveBreathSession(elapsed);
@@ -458,6 +554,8 @@ function openProfile(){
 }
 function closeProfile(){ $("#modalBackdrop").hidden=true; }
 $("#profileButton").addEventListener("click",openProfile);
+$("#healthConnectButton").addEventListener("click",explainHealthConnection);
+$("#profileHealthButton").addEventListener("click",explainHealthConnection);
 $("#closeProfile").addEventListener("click",closeProfile);
 $("#modalBackdrop").addEventListener("click",e=>{if(e.target===$("#modalBackdrop"))closeProfile();});
 $("#saveProfile").addEventListener("click",()=>{

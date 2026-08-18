@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "background_color": "#f4f7f5",
   "theme_color": "#0e6b45",
-  "description": "VO₂ max tracking, aerobic training, and performance-focused breathing.",
+  "description": "VO₂ max tracking, Apple Health-ready aerobic training, and performance-focused breathing.",
   "icons": [
     {
       "src": "./icon-192.png",

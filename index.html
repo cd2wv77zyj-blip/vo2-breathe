@@ -35,6 +35,18 @@
         <p id="todayGreeting" class="lede">Your training, breathing, and progress in one place.</p>
       </div>
 
+      <article id="healthStatusCard" class="card health-connect-card">
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">APPLE HEALTH</p>
+            <h2 id="healthStatusTitle">Connect your health data</h2>
+          </div>
+          <span id="healthStatusBadge" class="tier-badge">Not connected</span>
+        </div>
+        <p id="healthStatusCopy" class="muted-copy">In the native iPhone build, Apple Health will supply your latest VO₂ max, workouts, resting heart rate, HRV, and other available metrics automatically.</p>
+        <button id="healthConnectButton" class="secondary-button">Connect Apple Health</button>
+      </article>
+
       <article class="vo2-card card">
         <div class="card-heading-row">
           <div>
@@ -163,6 +175,12 @@
         <div class="player-controls">
           <button id="audioToggle" class="chip active" aria-pressed="true">🔊 Audio</button>
           <button id="breathStart" class="primary-button">Start session</button>
+        </div>
+
+        <div class="live-sensor-preview">
+          <div><span>Apple Watch HR</span><strong id="watchHr">—</strong><small>bpm</small></div>
+          <div><span>Post-session HRV</span><strong id="watchHrv">—</strong><small>ms</small></div>
+          <div><span>Breathing cue</span><strong id="cueStatus">Audio</strong><small id="hapticStatus">Native haptics later</small></div>
         </div>
 
         <p id="breathInstruction" class="small-copy">Breathe gently. Do not force unusually large breaths.</p>
@@ -330,6 +348,15 @@
     <p class="eyebrow">PROFILE</p>
     <h2 id="profileTitle">Personalize your plan</h2>
     <p class="muted-copy">Stored only on this device in this development build.</p>
+
+    <article class="profile-health-card">
+      <div>
+        <p class="eyebrow">PREFERRED DATA SOURCE</p>
+        <h3>Apple Health</h3>
+        <p id="profileHealthCopy" class="small-copy">Connect once in the native iOS app and we’ll use HealthKit data before asking you to enter the same information manually.</p>
+      </div>
+      <button id="profileHealthButton" class="secondary-button">Connect Apple Health</button>
+    </article>
     <div class="form-grid two">
       <label>Name
         <input id="profileName" autocomplete="given-name" placeholder="Your name">

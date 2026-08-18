@@ -52,3 +52,14 @@ input,select{width:100%;margin-top:6px;padding:12px 11px;border:1px solid var(--
 :root{--bg:#0b0e0d;--card:#141817;--card2:#1b211e;--text:#f1f5f2;--muted:#96a19b;--line:#28322d;--accent:#86dbae;--accent2:#173526;--danger:#ff9c9c;--shadow:none}
 .brand-mark{color:#082015}.primary-button{color:#092016}.toast{background:#eff8f2;color:#122019}
 }
+
+.health-connect-card{background:linear-gradient(145deg,var(--card),color-mix(in srgb,var(--accent2) 42%,var(--card)))}
+.profile-health-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}
+.profile-health-card h3{margin:2px 0 5px;font-size:18px}
+.profile-health-card .secondary-button{margin-top:10px}
+.live-sensor-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.live-sensor-preview>div{background:var(--card2);border-radius:14px;padding:10px;min-width:0}
+.live-sensor-preview span{display:block;color:var(--muted);font-size:9px;font-weight:800;line-height:1.2}
+.live-sensor-preview strong{display:block;font-size:20px;margin-top:7px}
+.live-sensor-preview small{display:block;color:var(--muted);font-size:8px;margin-top:2px}
+@media(max-width:430px){.live-sensor-preview{grid-template-columns:1fr 1fr}.live-sensor-preview>div:last-child{grid-column:1/-1}}
