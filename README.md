@@ -1,9 +1,11 @@
-# VO₂ Breathe PWA v7.6
+# VO₂ Breathe PWA v7.7
 
-- Replaces the Breathe circle with a closer SVG interpretation of mockup #7 Soft Wave.
-- Uses broad translucent ribbon layers rather than thin line loops.
-- Breath scaling is now driven frame-by-frame with requestAnimationFrame.
-- The ring expands continuously for the full inhale and contracts continuously for the full exhale.
-- Uses a sine ease for soft, natural acceleration/deceleration at phase boundaries.
-- Keeps v7.5 layout, carousel behavior, onboarding, and Today drag behavior unchanged.
-- New v7.6 asset names/cache force refresh.
+Changes from v7.6:
+- Soft Wave redesigned to match the latest approved mockup more closely.
+- Removes the two outer concentric-circle effects completely.
+- Reduces wave density from four ribbon layers to three broader, more open ribbon layers.
+- Uses gentler 8-lobe undulation for a cleaner Soft Wave look.
+- Expands farther on inhale (82% -> 114%).
+- Contracts farther on exhale (114% -> 82%).
+- Keeps frame-by-frame requestAnimationFrame motion, so the full size change remains smooth and tied to actual breath cadence.
+- All other v7.6 interactions and layout remain unchanged.
