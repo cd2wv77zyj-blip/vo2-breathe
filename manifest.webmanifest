@@ -11,13 +11,13 @@
   "description": "VO₂ max, Today planning, customizable widgets, adaptive training, and swipeable guided breathing.",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "./icon-192-v792.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icon-512.png",
+      "src": "./icon-512-v792.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
