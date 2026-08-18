@@ -1,11 +1,8 @@
-# VO₂ Breathe PWA v7.7
+# VO₂ Breathe PWA v7.8
 
-Changes from v7.6:
-- Soft Wave redesigned to match the latest approved mockup more closely.
-- Removes the two outer concentric-circle effects completely.
-- Reduces wave density from four ribbon layers to three broader, more open ribbon layers.
-- Uses gentler 8-lobe undulation for a cleaner Soft Wave look.
-- Expands farther on inhale (82% -> 114%).
-- Contracts farther on exhale (114% -> 82%).
-- Keeps frame-by-frame requestAnimationFrame motion, so the full size change remains smooth and tied to actual breath cadence.
-- All other v7.6 interactions and layout remain unchanged.
+Fix:
+- v7.7 accidentally pinned the Soft Wave with `transform: scale(.82) !important`.
+- That CSS rule overrode the JavaScript requestAnimationFrame scaling.
+- v7.8 removes that override so the Soft Wave can animate again.
+- Keeps the approved v7.7 Soft Wave design and the larger 82% -> 114% breathing range.
+- All other interactions remain unchanged.
